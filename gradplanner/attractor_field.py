@@ -1,5 +1,7 @@
 import numpy as np
+
 from gradplanner.field_utils import Pixel
+from gradplanner.utils import plot_grad_field
 
 
 class AttractorField():
@@ -10,8 +12,8 @@ class AttractorField():
                  goal=None              # np.array(2,): The goal position. 
                  ):
         """Initializes an AttractorField."""
-        self._occupancy_grid = occupancy_grid
-        self._goal = goal
+        self._occupancy_grid = occupancy_grid.copy() if occupancy_grid is not None else None
+        self._goal = goal.copy() if goal is not None else None
 
         if self._occupancy_grid is not None:
             self._grid_shape = self._occupancy_grid.shape
@@ -30,12 +32,12 @@ class AttractorField():
     def set_new_goal(self, goal):
         """Sets a new goal. If an occupancy map has already been provided, it initializes the attractive field."""
         assert goal.shape == (2,), "Expected goal shape (2,) but received {}".format(goal.shape)
-        self._goal = goal
+        self._goal = goal.copy()
         if self._occupancy_grid is not None:
             self._init_field()
 
 
-    def update_field(self, new_grid):
+    def update_occupancy_grid(self, new_grid):
         """Updates the occupancy grid based on a new grid.
         It creates a list of indices where there has been a change in the occupancy grid.
         self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
@@ -47,11 +49,13 @@ class AttractorField():
             self._occupancy_grid = new_grid.copy()
             if diff_grid.any():
                 self._changed_indices = list(np.argwhere(diff_grid != 0))
-                self._update_field
+                self._update_field()
         else:
             self._occupancy_grid = new_grid.copy()
             self._grid_shape = self._occupancy_grid.shape
             self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
+            if self._goal_is_set:
+                self._init_field()
 
 
     def _update_field(self):
@@ -120,6 +124,8 @@ class AttractorField():
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
                     new_pix = self._field[new_ind[0], new_ind[1]]
                     # if the pixel has a bigger value and is not an obstacle:
+                    print(new_pix)
+                    print(pix)
                     if (new_pix.value < pix.value) or (new_pix.value == 0):
                         value_orig = new_pix.value
                         new_pix = self._update_pixel(pix, new_pix)
@@ -192,6 +198,16 @@ class AttractorField():
             new_pix.normalize_grad()
 
         return new_pix
+
+
+    def plot_field(self):
+        """plots the gradient field."""
+        occ_grid_to_plot = self._occupancy_grid.copy()
+        goal_floor = np.floor(self._goal)
+        goal_i, goal_j = int(goal_floor[0]), int(goal_floor[1])
+        occ_grid_to_plot[goal_i, goal_j] = -1
+
+        plot_grad_field(self._field, occ_grid_to_plot)
 
 
     @property

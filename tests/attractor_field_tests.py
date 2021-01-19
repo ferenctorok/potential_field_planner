@@ -227,12 +227,12 @@ class AttractorFieldTests(unittest2.TestCase):
         # TODO
 
 
-    def test_update_field(self):
-        """Tests the update_field method of the AttractorField"""
+    def test_update_occupancy_grid(self):
+        """Tests the update_occupancy_grid method of the AttractorField"""
 
         # testing without original occupancy grid:
         field = AttractorField(goal=self.goal)
-        field.update_field(self.occupancy_grid)
+        field.update_occupancy_grid(self.occupancy_grid)
         self.assertTrue((field._occupancy_grid == self.occupancy_grid).all())
         self.assertEqual((self.N, self.M), field._grid_shape)
         self.assertTrue((np.array([self.N, self.M]) == field._grid_shape_arr).all())
@@ -242,11 +242,11 @@ class AttractorFieldTests(unittest2.TestCase):
 
         # test wrong shape assertion:
         with self.assertRaises(AssertionError):
-            field.update_field(np.zeros((self.N - 1, self.M)))
+            field.update_occupancy_grid(np.zeros((self.N - 1, self.M)))
 
         # check if nothing has changed:
         new_grid = self.occupancy_grid.copy()
-        field.update_field(new_grid)
+        field.update_occupancy_grid(new_grid)
         self.assertTrue((field._occupancy_grid == new_grid).all())
         with self.assertRaises(AttributeError):
             a = field._changed_indices
@@ -255,7 +255,7 @@ class AttractorFieldTests(unittest2.TestCase):
         new_grid[5, 5] = 1
         new_grid[0, 3] = 0
         etalon_changes = np.sort(np.array([[5, 5], [0, 3]]), axis=0)
-        field.update_field(new_grid)
+        field.update_occupancy_grid(new_grid)
         changes = np.sort(np.array(field._changed_indices), axis=0)
         self.assertTrue((field._occupancy_grid == new_grid).all())
         self.assertEqual(len(field._changed_indices), 2)
@@ -276,9 +276,9 @@ class AttractorFieldTests(unittest2.TestCase):
         occ_grid_with_obst[7, 6] = 1
 
         # testing the insertion of new obstacle:
-        field1 = AttractorField(occupancy_grid=occ_grid_no_obst, goal=goal)
+        field1 = AttractorField(occupancy_grid=occ_grid_with_obst, goal=goal)
         field2 = AttractorField(occupancy_grid=occ_grid_no_obst, goal=goal)
-        field2.update_field(occ_grid_with_obst)
+        field2.update_occupancy_grid(occ_grid_with_obst)
 
         # testing the values:
         result_vals1 = get_values_from_field(field1._field)
@@ -291,9 +291,9 @@ class AttractorFieldTests(unittest2.TestCase):
                 self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
 
         # testing when the obstacle dissappears:
-        field1 = AttractorField(occupancy_grid=occ_grid_with_obst, goal=goal)
+        field1 = AttractorField(occupancy_grid=occ_grid_no_obst, goal=goal)
         field2 = AttractorField(occupancy_grid=occ_grid_with_obst, goal=goal)
-        field2.update_field(occ_grid_no_obst)
+        field2.update_occupancy_grid(occ_grid_no_obst)
 
         # testing the values:
         result_vals1 = get_values_from_field(field1._field)
