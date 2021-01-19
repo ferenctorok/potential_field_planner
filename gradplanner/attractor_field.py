@@ -59,7 +59,12 @@ class AttractorField():
         It uses the list of indices of changed grid points.
         """
         
+        # neighboring indices of the changed gridpoints sorted by value:
         expandable_indices = self._list_expandable_indices()
+        
+        # carry out the expansion from every expandable pixel:
+        for index in expandable_indices:
+            self._expand_pixel(index)
 
 
     def _list_expandable_indices(self):
@@ -90,11 +95,103 @@ class AttractorField():
 
         return indices[sorted_ind]
 
+    
+    def _expand_pixel(self, index):
+        """Carries out a wavefront expansion starting from a pixel at 'index' until it has got an effect.
+        Input:
+            - index: np.array((2,)), the index from where to start the expansion.
+        """
+
+        queue = [pixel]
+        search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+
+        while queue:
+            ind = queue.pop(0)
+            pix = self._field[ind[0], ind[1]]
+            # iterate over the neighboring pixels:
+            for direction in search_directions:
+                new_ind = ind + direction
+                if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                    new_pix = self._field[new_ind[0], new_ind[1]]
+                    # if the pixel has a bigger value and is not an obstacle:
+                    if (new_pix.value >= pix.value) and (new_pix.value != 1):
+                        value_orig = new_pix.value
+                        new_pix = self._update_pixel(pix, new_pix)
+                        if value_orig != new_pix.value:
+                            queue.append(new_ind)
+
+
+    def _set_new_pixel(self, pix, new_pix):
+        """Sets up a new pixels value and gradient."""
+
+        # setting the value of the pixel:
+        new_pix.value = pix.value - 1
+        # setting the gradient of the pixel:
+        return self._update_gradient(pix, new_pix)
+
+
+    def _update_pixel(self, pix, new_pix):
+        """Updates a pixels value and gradient."""
+        
+        # setting the value of the pixel:
+        ind = np.array([new_pix.x, new_pix.y])
+        search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
+        for direction in search_directions:
+            old_ind = ind + direction
+            if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all():
+                old_pix = self._field[old_ind[0], old_ind[1]]
+                if (new_pix.value < old_pix.value - 1) or (new_pix.value == 0):
+                    new_pix.value = old_pix.value - 1
+
+        # updating the gradient of the pixel:
+        return self._update_gradient(pix, new_pix)
+
+
+    def _update_gradient(self, pix, new_pix):
+        """Updates the gradient of the pixel."""
+
+        new_pix.grad = np.array([0, 0])
+        
+        # summing up the gradients which point to points which are closer to the goal:
+        ind = np.array([new_pix.x, new_pix.y])
+        search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [-1, -1], [1, -1]]
+        
+        for direction in search_directions:
+            old_ind = ind + direction
+            if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all():
+                old_pix = self._field[old_ind[0], old_ind[1]]
+                if (old_pix.value < 0) and (old_pix.value > new_pix.value):
+                    new_pix.grad += np.array(direction)
+                    
+        new_pix.normalize_grad()
+                    
+        # if the sum is accidentaly zero, or if it points to an obstacle: 
+        # set grad to point to the first direction that it finds feasible:
+        # The search_directions list is structured so, that pixels which are touching this
+        # pixel with a side are taken first.
+        grad_is_zero = (new_pix.grad[0] == 0) and (new_pix.grad[1] == 0)
+        # check if neighbour is opccupied:
+        neighbour_indices = np.floor(ind + np.array([0.5, 0.5]) + new_pix.grad)
+        neighbour_is_occupied = (self._field[int(neighbour_indices[0]), int(neighbour_indices[1])].value == 1)
+        
+        if grad_is_zero or neighbour_is_occupied:
+            for direction in search_directions:
+                old_ind = ind + direction
+                if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all():
+                    old_pix = self._field[old_ind[0], old_ind[1]]
+                    if (old_pix.value < 0) and (old_pix.value > new_pix.value):
+                        new_pix.grad = np.array(direction)
+                        break
+            new_pix.normalize_grad()
+
+        return new_pix
+
 
     @property
     def _occupancy_grid_is_set(self):
         """Returns whether the occupancy grid is set or not."""
         return self._occupancy_grid is not None
+
     
     @property
     def _goal_is_set(self):
@@ -141,7 +238,7 @@ def get_attractor_field(occupancy_grid, goal):
             new_ind = ind + direction
             if (new_ind >= 0).all() and (new_ind < occ_shape).all():
                 new_pix = attractor_field[new_ind[0], new_ind[1]]
-                # if the goal is free space or goal, calculate the value and the gradient of the new pixel:
+                # if the pixel is free space, calculate the value and the gradient of the new pixel:
                 if (new_pix.value == 0):
                     set_new_pixel_attr(pix, new_pix, attractor_field, occ_shape)
                     queue.append(new_ind)

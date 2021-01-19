@@ -150,6 +150,31 @@ class AttractorFieldTests(unittest2.TestCase):
             self.assertTrue(value >= next_value)
 
 
+    def test_update_pixel(self):
+        """Tests the _update_pixel method of the AttractorField"""
+
+        field = AttractorField(occupancy_grid=self.occupancy_grid, goal=self.goal)
+        # setting some pixels:
+        for ind in [(6, 5), (6, 6), (5, 6), (4, 6), (4, 5), (4, 4), (6, 4)]:
+            field._field[ind].value = -3
+        field._field[5, 4].value = -2
+
+        # the pixel value is already bigger:
+        field._field[5, 5].value = -1
+        pix = field._field[4, 5]
+        new_pix = field._field[5, 5]
+        new_pix = field._update_pixel(pix, new_pix)
+        self.assertEqual(new_pix.value, -1)
+        self.assertTrue((new_pix.grad == np.array([0, 0])).all())
+
+        # the pixel value has to be changed:
+        field._field[5, 5].value = -4
+        pix = field._field[4, 5]
+        new_pix = field._field[5, 5]
+        new_pix = field._update_pixel(pix, new_pix)
+        self.assertEqual(new_pix.value, -3)
+        self.assertTrue((new_pix.grad == np.array([0, -1])).all())
+
         
 
 
