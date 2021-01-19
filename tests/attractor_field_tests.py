@@ -72,7 +72,33 @@ class AttractorFieldTests(unittest2.TestCase):
         field = AttractorField(occupancy_grid=occupancy_grid, goal=goal)
         field._init_field()
         self.assertIsNotNone(field._field)
+
+
+    def test_set_new_goal(self):
+        """Tests set_new_goal method of the AttractorField"""
+        N, M = 10, 12
+        occupancy_grid = np.ones((N, M))
+        occupancy_grid[1: -1, 1: -1] = 0
+        goal = np.array([5, 5])
+        field = AttractorField()
+
+        # checking assertion errors:
+        with self.assertRaises(AssertionError):
+            field.set_new_goal(np.array([1, 2, 3]))
+            field.set_new_goal(np.array([[1, 1]]))
         
+        # checking goal setting without occupancy_grid:
+        field.set_new_goal(goal)
+        self.assertTrue((field._goal == goal).all())
+        self.assertIsNone(field._occupancy_grid)
+
+        # checking goal setting with occupancy grid:
+        field = AttractorField()
+        field._occupancy_grid = occupancy_grid
+        field.set_new_goal(goal)
+        self.assertTrue((field._goal == goal).all())
+        self.assertIsNotNone(field._field)
+
 
 if __name__ == "__main__":
     unittest2.main()

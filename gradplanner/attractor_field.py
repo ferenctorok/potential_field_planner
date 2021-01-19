@@ -31,7 +31,7 @@ class AttractorField():
         """Sets a new goal. If an occupancy map has already been provided, it initializes the attractive field."""
         assert goal.shape == (2,), "Expected goal shape (2,) but received {}".format(goal.shape)
         self._goal = goal
-        if self._occupancy_grid:
+        if self._occupancy_grid is not None:
             self._init_field()
 
 
