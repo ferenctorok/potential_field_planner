@@ -5,17 +5,59 @@ from gradplanner.field_utils import Pixel
 class AttractorField():
     """Attractor gradient field."""
 
-    def __init__():
+    def __init__(self,
+                 occupancy_grid=None,   # np.array(N, M), 1: obstacle, 0: freespace
+                 goal=None              # np.array(2,): The goal position. 
+                 ):
         """Initializes an AttractorField."""
+        self._occupancy_grid = occupancy_grid
+        self._goal = goal
 
-        pass
+        if self._occupancy_grid and self._goal:
+            self._init_field()
+
+    
+    def _init_field(self):
+        """Initializes the attractor field based on the available occupancy_grid"""
+        assert self._occupancy_grid, "Empty or not provided occupancy grid."
+        assert self._goal, "Goal is not set."
+        self._field = get_attractor_field(self._occupancy_grid, self._goal)
 
 
-def get_attractor_field(occupancy_grid):
+    def set_new_goal(self, goal):
+        """Sets a new goal. If an occupancy map has already been provided, it initializes the attractive field."""
+        assert goal.shape == (2,), "Expected goal shape (2,) but received {}".format(goal.shape)
+        self._goal = goal
+        if self._occupancy_grid:
+            self._init_field()
+
+
+    def update_occupancy_grid(self, new_grid):
+        """Updates the occupancy grid based on a new grid.
+        It creates a list of indices where there has been a change in the occupancy grid.
+        """
+        diff_grid = (self._occupancy_grid != new_grid)
+        if diff_grid.any():
+            self._update_field
+
+
+    def _update_field(self):
+        """updates the attractor field if there is something new in the occupancy grid.
+        It uses the list of indices of changed grid points.
+        """
+        
+
+
+
+        
+
+
+def get_attractor_field(occupancy_grid, goal):
     """
     Wavefront planner started from the goal.
     Input:
         - occupancy_grid: np.array(N, M)
+        - goal: np.array(2,), goal position
     Output:
         - attractor_field: np.array(N, M), The repulsive field that was produced
     """
@@ -28,13 +70,14 @@ def get_attractor_field(occupancy_grid):
     attractor_field = np.ndarray(occupancy_grid.shape, dtype=np.object)
     for i in range(occupancy_grid.shape[0]):
         for j in range(occupancy_grid.shape[1]):
-            attractor_field[i, j] = Pixel(i, j)
-            if occupancy_grid[i, j] == 1:
-                attractor_field[i, j].value = 1
-            elif occupancy_grid[i, j] == -1:
-                attractor_field[i, j].value = -1
-                queue.append(np.array([i, j]))
-                
+            attractor_field[i, j] = Pixel(i, j, occupancy_grid[i, j])
+
+    # set the goal position pixel to -1 and add its index to the queue.
+    goal_floor = np.floor(goal)
+    goal_i, goal_j = int(goal_floor[0]), int(goal_floor[1])
+    attractor_field[goal_i, goal_j].value = -1
+    queue.append(np.array([goal_i, goal_j]))
+                   
     # carrying out the expansion while the queue is not empty:
     #search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
     search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]

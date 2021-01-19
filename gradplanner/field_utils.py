@@ -11,7 +11,7 @@ class Pixel:
         """Initializes a pixel."""
         self.x = x
         self.y = y
-        self.value = 0
+        self.value = value
         self.grad = grad
     
     
