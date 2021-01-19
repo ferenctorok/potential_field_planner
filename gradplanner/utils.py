@@ -20,3 +20,11 @@ def plot_grad_field(field, occupancy_grid):
     ax.quiver(x.T, -y.T, scale=1, scale_units='xy')
     ax.matshow(occupancy_grid.T)
     plt.show()
+
+
+def array_is_in_list(array, l):
+    """Checks if an np.array 'array' is in the list 'l'."""
+    for item in l:
+        if (array == item).all():
+            return True
+    return False

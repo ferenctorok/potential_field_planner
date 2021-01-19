@@ -40,7 +40,7 @@ class AttractorField():
         It creates a list of indices where there has been a change in the occupancy grid.
         self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
         """
-        if self._occupancy_grid is not None:
+        if self._occupancy_grid_is_set and self._goal_is_set:
             assert new_grid.shape == self._grid_shape, \
                 "New grid shape does not match previous grid shapes. Expected {}, recieved {}".format(self._grid_shape, new_grid.shape)
             diff_grid = new_grid - self._occupancy_grid
@@ -68,8 +68,7 @@ class AttractorField():
         of the pixel with the smalles value at the first place.
         """
 
-        values = np.array([])
-        indices = np.array([])
+        indices, values = [], []
 
         directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
         for index in self._changed_indices:
@@ -79,20 +78,28 @@ class AttractorField():
                     if not self._occupancy_grid[new_ind[0], new_ind[1]]:
                         indices.append(new_ind)
                         values.append(self._field[new_ind[0], new_ind[1]].value)
-        
+
+        indices, values = np.array(indices), np.array(values)
+
         # there are probably multiplicities in the indices, so first we sort them:
         indices, returned_inds = np.unique(indices, return_index=True, axis=0)
         values = values[returned_inds]
 
         # sorting it according to values.
-        sorted_ind = np.argsort(values)
+        sorted_ind = np.argsort(-values)
 
         return indices[sorted_ind]
-            
 
 
-
-        
+    @property
+    def _occupancy_grid_is_set(self):
+        """Returns whether the occupancy grid is set or not."""
+        return self._occupancy_grid is not None
+    
+    @property
+    def _goal_is_set(self):
+        """Returns whether the goal is set or not."""
+        return self._goal is not None
 
 
 def get_attractor_field(occupancy_grid, goal):
@@ -117,8 +124,9 @@ def get_attractor_field(occupancy_grid, goal):
 
     # set the goal position pixel to -1 and add its index to the queue.
     goal_floor = np.floor(goal)
-    assert (goal_floor >= 0).all() and (goal_floor < occ_shape).all(), "Goal is out of map." 
     goal_i, goal_j = int(goal_floor[0]), int(goal_floor[1])
+    assert (goal_floor >= 0).all() and (goal_floor < occ_shape).all(), "Goal is out of map." 
+    assert (occupancy_grid[goal_i, goal_j] == 0), "Goal is not in free space."
     attractor_field[goal_i, goal_j].value = -1
     queue.append(np.array([goal_i, goal_j]))
                    
