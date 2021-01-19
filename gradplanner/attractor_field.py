@@ -41,6 +41,8 @@ class AttractorField():
         self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
         """
         if self._occupancy_grid is not None:
+            assert new_grid.shape == self._grid_shape, \
+                "New grid shape does not match previous grid shapes. Expected {}, recieved {}".format(self._grid_shape, new_grid.shape)
             diff_grid = new_grid - self._occupancy_grid
             self._occupancy_grid = new_grid.copy()
             if diff_grid.any():
