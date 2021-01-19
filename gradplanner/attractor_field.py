@@ -35,7 +35,7 @@ class AttractorField():
             self._init_field()
 
 
-    def update_occupancy_grid(self, new_grid):
+    def update_field(self, new_grid):
         """Updates the occupancy grid based on a new grid.
         It creates a list of indices where there has been a change in the occupancy grid.
         self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
@@ -59,6 +59,12 @@ class AttractorField():
         It uses the list of indices of changed grid points.
         """
         
+        # updating the values of the pixels where there was a change:
+        for index in self._changed_indices:
+            if self._field[index[0], index[1]] == 1:
+                self._field[index[0], index[1]] = 0
+            else:
+                self._field[index[0], index[1]] = 1
         # neighboring indices of the changed gridpoints sorted by value:
         expandable_indices = self._list_expandable_indices()
         
@@ -102,7 +108,7 @@ class AttractorField():
             - index: np.array((2,)), the index from where to start the expansion.
         """
 
-        queue = [pixel]
+        queue = [index]
         search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
 
         while queue:
@@ -114,7 +120,7 @@ class AttractorField():
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
                     new_pix = self._field[new_ind[0], new_ind[1]]
                     # if the pixel has a bigger value and is not an obstacle:
-                    if (new_pix.value >= pix.value) and (new_pix.value != 1):
+                    if (new_pix.value < pix.value) or (new_pix.value == 0):
                         value_orig = new_pix.value
                         new_pix = self._update_pixel(pix, new_pix)
                         if value_orig != new_pix.value:
@@ -138,7 +144,8 @@ class AttractorField():
         search_directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
         for direction in search_directions:
             old_ind = ind + direction
-            if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all():
+            if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all() and \
+                (self._field[old_ind[0], old_ind[1]].value < 1):
                 old_pix = self._field[old_ind[0], old_ind[1]]
                 if (new_pix.value < old_pix.value - 1) or (new_pix.value == 0):
                     new_pix.value = old_pix.value - 1

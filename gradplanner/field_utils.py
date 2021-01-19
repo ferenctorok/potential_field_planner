@@ -53,3 +53,20 @@ def combine_grad_fields(field1, field2):
             out_field[i, j].normalize_grad()
     
     return out_field
+
+
+def get_values_from_field(field):
+    """Returns an (N, M) np.array with the values of the pixels in the field.
+    Input:
+        - field: np.array(N, M) of Pixels.
+    Output:
+        - out: np.array(N, M) with the values.
+    """
+
+    N, M = field.shape
+    out = np.zeros((N, M))
+    for i in range(N):
+        for j in range(M):
+            out[i, j] = field[i, j].value
+    
+    return out

@@ -2,7 +2,7 @@ import unittest2
 import numpy as np
 
 from gradplanner.attractor_field import AttractorField
-from gradplanner.utils import array_is_in_list
+from gradplanner.utils import array_is_in_list, get_values_from_field
 
 
 class AttractorFieldTests(unittest2.TestCase):
@@ -174,6 +174,66 @@ class AttractorFieldTests(unittest2.TestCase):
         new_pix = field._update_pixel(pix, new_pix)
         self.assertEqual(new_pix.value, -3)
         self.assertTrue((new_pix.grad == np.array([0, -1])).all())
+
+
+    def test_expand_pixel(self):
+        """Tests the _expand_pixel method of the AttractorField"""
+
+        # if expanding again any pixels without changing their values, nothing should change:
+        # field1 is left as it was and field2 is modified.
+        field1 = AttractorField(occupancy_grid=self.occupancy_grid, goal=self.goal)
+        field2 = AttractorField(occupancy_grid=self.occupancy_grid, goal=self.goal)
+
+        for ind in [[1, 1], [5, 5], [3, 7], [8, 1], [8, 4]]:
+            field2._expand_pixel(np.array(ind))
+            for i in range(self.N):
+                for j in range(self.M):
+                    self.assertEqual(field1._field[i, j].value, field2._field[i, j].value)
+                    self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
+
+        
+        ### placing an obstacle and then removing it from field2: ###
+        occ_grid = self.occupancy_grid.copy()
+        occ_grid[7, 5] = 1
+        field1 = AttractorField(occupancy_grid=occ_grid, goal=self.goal)
+        field2 = AttractorField(occupancy_grid=occ_grid, goal=self.goal)
+
+        field2._field[7, 5].value = 0
+        field2._expand_pixel(np.array([6, 5]))
+
+        # indices where the value did not change:
+        for ind in [(5, 5), (6, 5), (6, 6), (7, 6), (8, 6), (9, 6), (6, 4), (7, 4), (8, 4), (9, 4), (9, 5)]:
+            self.assertEqual(field1._field[ind].value, field2._field[ind].value)
+
+        # indices where the gradient did not change:
+        for ind in [(5, 5), (6, 5), (6, 6), (7, 7), (8, 7), (9, 7), (6, 4), (7, 3), (8, 3), (9, 3)]:
+            self.assertEqual(field1._field[ind].value, field2._field[ind].value)
+            self.assertTrue((field1._field[ind].grad == field2._field[ind].grad).all())
+
+        # indices where the value has changed:
+        self.assertEqual(field1._field[6, 5].value - 1, field2._field[7, 5].value)
+        self.assertEqual(field1._field[8, 5].value + 2, field2._field[8, 5].value)
+
+        # some indices with different gradients:
+        self.assertTrue((field2._field[7, 5].grad == np.array([-1, 0])).all())
+        self.assertTrue((field2._field[8, 5].grad == np.array([-1, 0])).all())
+        self.assertTrue((field2._field[7, 6].grad == np.array([-1 / np.sqrt(2), -1 / np.sqrt(2)])).all())
+        self.assertTrue((field2._field[8, 6].grad == np.array([-1 / np.sqrt(2), -1 / np.sqrt(2)])).all())
+        self.assertTrue((field2._field[7, 4].grad == np.array([-1 / np.sqrt(2), 1 / np.sqrt(2)])).all())
+        self.assertTrue((field2._field[8, 4].grad == np.array([-1 / np.sqrt(2), 1 / np.sqrt(2)])).all())
+
+        ### insterting an extra obstacle: ###
+        # TODO
+
+
+    def test_update_field(self):
+        """Tests the update_field method of the AttractorField"""
+
+        pass
+
+
+
+
 
         
 
