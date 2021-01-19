@@ -13,14 +13,17 @@ class AttractorField():
         self._occupancy_grid = occupancy_grid
         self._goal = goal
 
-        if self._occupancy_grid and self._goal:
-            self._init_field()
+        if self._occupancy_grid is not None:
+            self._grid_shape = self._occupancy_grid.shape
+            self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
+            if self._goal is not None:
+                self._init_field()
 
     
     def _init_field(self):
         """Initializes the attractor field based on the available occupancy_grid"""
-        assert self._occupancy_grid, "Empty or not provided occupancy grid."
-        assert self._goal, "Goal is not set."
+        assert self._occupancy_grid is not None, "Empty or not provided occupancy grid."
+        assert self._goal is not None, "Goal is not set."
         self._field = get_attractor_field(self._occupancy_grid, self._goal)
 
 
@@ -35,10 +38,18 @@ class AttractorField():
     def update_occupancy_grid(self, new_grid):
         """Updates the occupancy grid based on a new grid.
         It creates a list of indices where there has been a change in the occupancy grid.
+        self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
         """
-        diff_grid = (self._occupancy_grid != new_grid)
-        if diff_grid.any():
-            self._update_field
+        if self._occupancy_grid is not None:
+            diff_grid = new_grid - self._occupancy_grid
+            self._occupancy_grid = new_grid.copy()
+            if diff_grid.any():
+                self._changed_indices = list(np.argwhere(diff_grid != 0))
+                self._update_field
+        else:
+            self._occupancy_grid = new_grid.copy()
+            self._grid_shape = self._occupancy_grid.shape
+            self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
 
 
     def _update_field(self):
@@ -46,6 +57,36 @@ class AttractorField():
         It uses the list of indices of changed grid points.
         """
         
+        expandable_indices = self._list_expandable_indices()
+
+
+    def _list_expandable_indices(self):
+        """Lists all neighboring indices around changed areas. 
+        It also sorts them, so that the returned list will have the indices
+        of the pixel with the smalles value at the first place.
+        """
+
+        values = np.array([])
+        indices = np.array([])
+
+        directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+        for index in self._changed_indices:
+            for direction in directions:
+                new_ind = index + direction
+                if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                    if not self._occupancy_grid[new_ind[0], new_ind[1]]:
+                        indices.append(new_ind)
+                        values.append(self._field[new_ind[0], new_ind[1]].value)
+        
+        # there are probably multiplicities in the indices, so first we sort them:
+        indices, returned_inds = np.unique(indices, return_index=True, axis=0)
+        values = values[returned_inds]
+
+        # sorting it according to values.
+        sorted_ind = np.argsort(values)
+
+        return indices[sorted_ind]
+            
 
 
 
@@ -74,6 +115,7 @@ def get_attractor_field(occupancy_grid, goal):
 
     # set the goal position pixel to -1 and add its index to the queue.
     goal_floor = np.floor(goal)
+    assert (goal_floor >= 0).all() and (goal_floor < occ_shape).all(), "Goal is out of map." 
     goal_i, goal_j = int(goal_floor[0]), int(goal_floor[1])
     attractor_field[goal_i, goal_j].value = -1
     queue.append(np.array([goal_i, goal_j]))
