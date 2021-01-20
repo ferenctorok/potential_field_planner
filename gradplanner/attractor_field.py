@@ -1,6 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-from gradplanner.field_utils import Pixel
+from gradplanner.field_utils import Pixel, get_values_from_field
 from gradplanner.utils import plot_grad_field
 
 
@@ -65,16 +66,19 @@ class AttractorField():
         
         # updating the values of the pixels where there was a change:
         for index in self._changed_indices:
-            if self._field[index[0], index[1]] == 1:
-                self._field[index[0], index[1]] = 0
+            if self._field[index[0], index[1]].value == 1:
+                self._field[index[0], index[1]].value = 0
             else:
-                self._field[index[0], index[1]] = 1
+                self._field[index[0], index[1]].value = 1
+                self._field[index[0], index[1]].grad = np.array([0, 0])
+
         # neighboring indices of the changed gridpoints sorted by value:
         expandable_indices = self._list_expandable_indices()
         
         # carry out the expansion from every expandable pixel:
         for index in expandable_indices:
             self._expand_pixel(index)
+            self._update_gradient(self._field[index[0], index[1]])
 
 
     def _list_expandable_indices(self):
@@ -83,16 +87,18 @@ class AttractorField():
         of the pixel with the smalles value at the first place.
         """
 
-        indices, values = [], []
+        indices = []
 
         directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
         for index in self._changed_indices:
             for direction in directions:
                 new_ind = index + direction
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
-                    if not self._occupancy_grid[new_ind[0], new_ind[1]]:
+                    if self._field[new_ind[0], new_ind[1]].value < 0:
                         indices.append(new_ind)
-                        values.append(self._field[new_ind[0], new_ind[1]].value)
+
+        # checking for infeasible values which would lead to local minimas:
+        indices, values = self._sort_infeasible_indices(indices)
 
         indices, values = np.array(indices), np.array(values)
 
@@ -105,7 +111,50 @@ class AttractorField():
 
         return indices[sorted_ind]
 
-    
+
+    def _sort_infeasible_indices(self, indices):
+        """Looks for pixels which have infeasable small values. This can occure when a new obstacle is
+        placed in the grid and hence on the other side of this there are pixels which had been accessible
+        befopreviously through the place obstacle. Now these values have too small values and would lead
+        to local minimas on the further side of a newly placed obstacle.
+        """
+
+        indices_out, values_out = [], []
+        
+        directions = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
+        while indices:
+            index = indices.pop()
+            feasible = False
+            for direction in directions:
+                new_ind = index + direction
+                if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                    new_val = self._field[new_ind[0], new_ind[1]].value
+                    if (new_val < 0) and (new_val > self._field[index[0], index[1]].value):
+                        feasible = True
+                        break
+            
+            if feasible:
+                indices_out.append(index)
+                values_out.append(self._field[index[0], index[1]].value)
+            else:
+                # push all smaller neighbours back to the queue, since that is also a possibly infeasible point:
+                for direction in directions:
+                    new_ind = index + direction
+                    if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                        new_val = self._field[new_ind[0], new_ind[1]].value
+                        if (new_val < 0) and (new_val < self._field[index[0], index[1]].value):
+                            indices.append(new_ind)
+
+                # finally setting the value as free space as it has to be rediscovered to avoid local minimas:
+                self._field[index[0], index[1]].value = 0
+
+        # return the feasible indices and their values:
+        for index in indices_out:
+            values_out.append(self._field[index[0], index[1]].value)
+
+        return indices_out, values_out
+
+
     def _expand_pixel(self, index):
         """Carries out a wavefront expansion starting from a pixel at 'index' until it has got an effect.
         Input:
@@ -117,18 +166,25 @@ class AttractorField():
 
         while queue:
             ind = queue.pop(0)
+
+            #######################
+            # for debugging:
+            #oldval = self._field[ind[0], ind[1]].value
+            #self._field[ind[0], ind[1]].value = 10
+            #self.plot_potential()
+            #self._field[ind[0], ind[1]].value = oldval
+            ######################
+
             pix = self._field[ind[0], ind[1]]
             # iterate over the neighboring pixels:
             for direction in search_directions:
                 new_ind = ind + direction
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
                     new_pix = self._field[new_ind[0], new_ind[1]]
-                    # if the pixel has a bigger value and is not an obstacle:
-                    print(new_pix)
-                    print(pix)
+                    # if the new_pixel has smaller value or is free space:
                     if (new_pix.value < pix.value) or (new_pix.value == 0):
                         value_orig = new_pix.value
-                        new_pix = self._update_pixel(pix, new_pix)
+                        new_pix = self._update_pixel(new_pix)
                         if value_orig != new_pix.value:
                             queue.append(new_ind)
 
@@ -139,10 +195,10 @@ class AttractorField():
         # setting the value of the pixel:
         new_pix.value = pix.value - 1
         # setting the gradient of the pixel:
-        return self._update_gradient(pix, new_pix)
+        return self._update_gradient(new_pix)
 
 
-    def _update_pixel(self, pix, new_pix):
+    def _update_pixel(self, new_pix):
         """Updates a pixels value and gradient."""
         
         # setting the value of the pixel:
@@ -151,16 +207,16 @@ class AttractorField():
         for direction in search_directions:
             old_ind = ind + direction
             if (old_ind >= 0).all() and (old_ind < self._grid_shape_arr).all() and \
-                (self._field[old_ind[0], old_ind[1]].value < 1):
+                (self._field[old_ind[0], old_ind[1]].value < 0):
                 old_pix = self._field[old_ind[0], old_ind[1]]
                 if (new_pix.value < old_pix.value - 1) or (new_pix.value == 0):
                     new_pix.value = old_pix.value - 1
 
         # updating the gradient of the pixel:
-        return self._update_gradient(pix, new_pix)
+        return self._update_gradient(new_pix)
 
 
-    def _update_gradient(self, pix, new_pix):
+    def _update_gradient(self, new_pix):
         """Updates the gradient of the pixel."""
 
         new_pix.grad = np.array([0, 0])
@@ -200,7 +256,7 @@ class AttractorField():
         return new_pix
 
 
-    def plot_field(self):
+    def plot_grad(self):
         """plots the gradient field."""
         occ_grid_to_plot = self._occupancy_grid.copy()
         goal_floor = np.floor(self._goal)
@@ -208,6 +264,16 @@ class AttractorField():
         occ_grid_to_plot[goal_i, goal_j] = -1
 
         plot_grad_field(self._field, occ_grid_to_plot)
+
+
+    def plot_potential(self):
+        """Plots the potential values of the grid"""
+        values = get_values_from_field(self._field)
+        M, N = self._grid_shape
+
+        f, ax = plt.subplots(1, 1, figsize=(16, M / N * 16))
+        ax.matshow(values.T)
+        plt.show()
 
 
     @property

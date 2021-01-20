@@ -162,17 +162,15 @@ class AttractorFieldTests(unittest2.TestCase):
 
         # the pixel value is already bigger:
         field._field[5, 5].value = -1
-        pix = field._field[4, 5]
         new_pix = field._field[5, 5]
-        new_pix = field._update_pixel(pix, new_pix)
+        new_pix = field._update_pixel(new_pix)
         self.assertEqual(new_pix.value, -1)
         self.assertTrue((new_pix.grad == np.array([0, 0])).all())
 
         # the pixel value has to be changed:
         field._field[5, 5].value = -4
-        pix = field._field[4, 5]
         new_pix = field._field[5, 5]
-        new_pix = field._update_pixel(pix, new_pix)
+        new_pix = field._update_pixel(new_pix)
         self.assertEqual(new_pix.value, -3)
         self.assertTrue((new_pix.grad == np.array([0, -1])).all())
 

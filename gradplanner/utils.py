@@ -15,7 +15,6 @@ def plot_grad_field(field, occupancy_grid):
             y[i, j] = field[i, j].grad[1] + eps
     
     # plotting:
-    plt.figure(figsize=(16, M / N * 16))
     f, ax = plt.subplots(1, 1, figsize=(16, M / N * 16))
     ax.quiver(x.T, -y.T, scale=1, scale_units='xy')
     ax.matshow(occupancy_grid.T)
