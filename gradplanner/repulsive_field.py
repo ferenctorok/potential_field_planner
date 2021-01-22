@@ -12,8 +12,8 @@ class RepulsiveField(PotentialField):
                  R=5
                  ):
         """Initialize the Repulsive field object."""
-        super().__init__(occupancy_grid)
         self._R = R
+        super().__init__(occupancy_grid)
 
         if self._occupancy_grid is not None:
             self._grid_shape = self._occupancy_grid.shape
@@ -27,11 +27,10 @@ class RepulsiveField(PotentialField):
         self._field = get_repulsive_field(self._occupancy_grid, self._R)
 
 
-    def update_occupancy_grid(self, occupancy_grid):
-        """Updates the repulsive field grid based on a new grid.
-        It creates a list of indices where there has been a change in the occupancy grid.
-        self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
-        """
+    @property
+    def _everything_is_set_for_init(self):
+        """True, if everything is set for initializing a potential field."""
+        return self._occupancy_grid_is_set
 
 
 def get_repulsive_field(occupancy_grid, R):

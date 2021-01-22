@@ -13,6 +13,12 @@ class PotentialField:
         """Initializes a PotentialField"""
         self._occupancy_grid = occupancy_grid.copy() if occupancy_grid is not None else None
 
+        if self._occupancy_grid_is_set:
+            self._grid_shape = self._occupancy_grid.shape
+            self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
+            if self._everything_is_set_for_init:
+                self._init_field()
+
 
     def _init_field(self):
         """Initializes the potential field.
@@ -21,8 +27,29 @@ class PotentialField:
         raise(NotImplementedError)
 
 
-    def update_occupancy_grid(self, occupancy_grid):
-        """Updates the potential field based on a new occupancy grid.
+    def update_occupancy_grid(self, new_grid):
+        """Updates the attractor field based on a new grid.
+        It creates a list of indices where there has been a change in the occupancy grid.
+        self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
+        """
+        if self._everything_is_set_for_init:
+            assert new_grid.shape == self._grid_shape, \
+                "New grid shape does not match previous grid shapes. Expected {}, recieved {}".format(self._grid_shape, new_grid.shape)
+            diff_grid = new_grid - self._occupancy_grid
+            self._occupancy_grid = new_grid.copy()
+            if diff_grid.any():
+                self._changed_indices = list(np.argwhere(diff_grid != 0))
+                self._update_field()
+        else:
+            self._occupancy_grid = new_grid.copy()
+            self._grid_shape = self._occupancy_grid.shape
+            self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
+            if self._everything_is_set_for_init:
+                self._init_field()
+
+
+    def _update_field(self):
+        """Updates the potential field.
         Has to be implemented in child class.
         """
         raise(NotImplementedError)
@@ -49,3 +76,10 @@ class PotentialField:
         """Returns whether the occupancy grid is set or not."""
         return self._occupancy_grid is not None
 
+
+    @property
+    def _everything_is_set_for_init(self):
+        """True, if everything is set for initializing a potential field.
+        Has to be set in child class.
+        """
+        raise(NotImplementedError)
