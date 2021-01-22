@@ -46,7 +46,7 @@ class RepulsiveField(PotentialField):
         indices = []
         
         for index in self._changed_indices:
-            if self._field[index[i], index[j]].value == 1:
+            if self._field[index[0], index[1]].value == 1:
                 indices.append(index)
             else:
                 for ind in self._get_first_not_influenced_pixels(index):

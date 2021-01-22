@@ -101,9 +101,11 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
 
     def test_get_first_not_influenced_pixels(self):
-        """Tests the _get_first_not_influenced_pixels method of the RepulsiveField"""
+        """Tests the _get_first_not_influenced_pixels method of the RepulsiveField.
+        An obstacle has disappeared from (5, 5).
+        """
 
-        field = RepulsiveField(occupancy_grid=self.occupancy_grid)
+        field = RepulsiveField(occupancy_grid=self.occupancy_grid, R=4)
 
         # first check it if there is nothing to return:
         # As if an obstacle in (5, 5) would have disappeared, but there is no other obstacle
@@ -141,11 +143,56 @@ class RepulsiveFieldTests(unittest2.TestCase):
         field._field[7, 3].value = 0
 
         out = field._get_first_not_influenced_pixels(np.array([5, 5]))
-        print(out)
 
         self.assertEqual(len(out), 2)
         for ind in [np.array([7, 7]), np.array([7, 4])]:
             self.assertTrue(array_is_in_list(ind, out))
+
+
+    def test_list_expandable_indices(self):
+        """Tests the _list_expandable_indices method of the RepulsiveField.
+        There is going to be a disappeared obstacle in (5, 5) and a 
+        new obstacle in (2, 2).
+        """
+
+        field = RepulsiveField(occupancy_grid=self.occupancy_grid, R=4)
+
+        # the setup from test_get_first_not_influenced_pixels:
+        for i in range(1, self.N - 1):
+            for j in range(1, self.M - 1):
+                field._field[i, j].value = 0
+                field._field[i, j].parent = None
+
+        for i in range(4, 7):
+            for j in range(4, 7):
+                field._field[i, j].value = 2
+                field._field[i, j].parent = (5, 5)
+
+        field._field[7, 7].parent = (9, 9)
+        field._field[7, 7].value = 3
+        field._field[7, 6].parent = (9, 9)
+        field._field[7, 6].value = 4
+        field._field[7, 5].parent = (9, 9)
+        field._field[7, 5].value = 5
+        field._field[7, 4].parent = (9, 9)
+        field._field[7, 4].value = 1
+        field._field[7, 3].parent = (9, 9)
+        field._field[7, 3].value = 0
+
+        # also placing an extra obstacle in the map, which is a new one:
+        field._field[2, 2].value = 1
+        
+        # setting up the changed indices and run the method:
+        field._changed_indices = [np.array([5, 5]), np.array([2, 2])]
+        out = field._list_expandable_indices()
+
+        self.assertEqual(len(out), 3)
+        for ind in [np.array([7, 7]), np.array([7, 4]), np.array([2, 2])]:
+            self.assertTrue(array_is_in_list(ind, out))        
+
+
+
+        
 
 
 
