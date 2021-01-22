@@ -7,12 +7,17 @@ class Pixel:
                  x,
                  y,
                  value=0,
-                 grad=np.array([0, 0])):
+                 grad=np.array([0, 0]),
+                 parent=None
+                 ):
         """Initializes a pixel."""
         self.x = x
         self.y = y
         self.value = value
         self.grad = grad
+        # if the pixel is used in a RepulsiveField object, it is worth it to know,
+        # which obstacle pixel influences it. It is the index of its parent.
+        self.parent = parent
     
     
     def normalize_grad(self):

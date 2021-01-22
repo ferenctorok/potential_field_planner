@@ -39,6 +39,14 @@ class PotentialField:
             self._occupancy_grid = new_grid.copy()
             if diff_grid.any():
                 self._changed_indices = list(np.argwhere(diff_grid != 0))
+                # updating the values of the pixels where there was a change:
+                for index in self._changed_indices:
+                    if self._field[index[0], index[1]].value == 1:
+                        self._field[index[0], index[1]].value = 0
+                    else:
+                        self._field[index[0], index[1]].value = 1
+                        self._field[index[0], index[1]].grad = np.array([0, 0])
+                        
                 self._update_field()
         else:
             self._occupancy_grid = new_grid.copy()

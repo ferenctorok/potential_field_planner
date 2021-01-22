@@ -7,7 +7,7 @@ from gradplanner.field_utils import get_values_from_field
 
 
 class AttractorFieldTests(unittest2.TestCase):
-    """Tests the AttractorField class."""
+    """Tests of the AttractorField class."""
 
     def setUp(self):
         """Sets up the tests."""
@@ -51,16 +51,22 @@ class AttractorFieldTests(unittest2.TestCase):
         field = AttractorField()
         with self.assertRaises(AssertionError):
             field._init_field()
+        with self.assertRaises(AttributeError):
+            field._field
 
         # testing with provided occupancy grid:
         field = AttractorField(occupancy_grid=self.occupancy_grid)
         with self.assertRaises(AssertionError):
             field._init_field()
+        with self.assertRaises(AttributeError):
+            field._field
 
         # testing with provided goal:
         field = AttractorField(goal=self.goal)
         with self.assertRaises(AssertionError):
             field._init_field()
+        with self.assertRaises(AttributeError):
+            field._field
 
         # testing with everything provided:
         field = AttractorField(occupancy_grid=self.occupancy_grid, goal=self.goal)

@@ -37,15 +37,6 @@ class AttractorField(PotentialField):
         """updates the attractor field if there is something new in the occupancy grid.
         It uses the list of indices of changed grid points.
         """
-        
-        # updating the values of the pixels where there was a change:
-        for index in self._changed_indices:
-            if self._field[index[0], index[1]].value == 1:
-                self._field[index[0], index[1]].value = 0
-            else:
-                self._field[index[0], index[1]].value = 1
-                self._field[index[0], index[1]].grad = np.array([0, 0])
-
         # neighboring indices of the changed gridpoints sorted by value:
         expandable_indices = self._list_expandable_indices()
         

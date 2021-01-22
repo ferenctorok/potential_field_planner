@@ -12,6 +12,7 @@ class RepulsiveField(PotentialField):
                  R=5
                  ):
         """Initialize the Repulsive field object."""
+        assert isinstance(R, int), "The provided R is not of type int."
         self._R = R
         super().__init__(occupancy_grid)
 
@@ -25,6 +26,90 @@ class RepulsiveField(PotentialField):
         """Initializes the repulsive field based on the available occupancy_grid"""
         assert self._occupancy_grid is not None, "Empty or not provided occupancy grid."
         self._field = get_repulsive_field(self._occupancy_grid, self._R)
+
+
+    def _update_field(self):
+        """updates the attractor field if there is something new in the occupancy grid.
+        It uses the list of indices of changed grid points.
+        """
+        
+        # indices from which an expansion has to be carried out.
+        expandable_indices = self._list_expandable_indices()
+
+
+    def _list_expandable_indices(self):
+        """Lists the indices from which updating expansion should be carried out.
+        It also zeros out pixels to which the neares obstacle was previously one
+        that disappeared.
+        """
+        
+        indices = []
+        
+        for index in self._changed_indices:
+            if self._field[index[i], index[j]].value == 1:
+                indices.append(index)
+            else:
+                for ind in self._get_first_not_influenced_pixels(index):
+                    indices.append(ind)
+
+        return indices
+
+
+    def _get_first_not_influenced_pixels(self, index):
+        """Sets all pixels to zero, which were influenced by the obstacle that disappeared
+        and returns the indices (if any) which are neighboring them and by further expanding them,
+        they will influence the reset pixels.
+        """
+
+        indices_out = []
+
+        queue = [index]
+        parent = (index[0], index[1])
+        search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+
+        while queue:
+            ind = queue.pop(0)
+            pix = self._field[ind[0], ind[1]]
+            # iterate over the neighboring pixels:
+            for direction in search_directions:
+                new_ind = ind + direction
+                if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                    new_pix = self._field[new_ind[0], new_ind[1]]
+                    # if the new_pix's parent was the disappeared obstacle:
+                    if new_pix.parent == parent:
+                        # reseting the pixel:
+                        new_pix.value = 0
+                        new_pix.parent = None
+                        # searching among the surrounding pixels for a possible new pixel to expand.
+                        to_expand = self._search_surrounding_for_expandable(new_pix)
+                        if to_expand is not None:
+                            indices_out.append(to_expand)
+                        
+                        queue.append(new_ind)
+
+        return indices_out                        
+    
+
+    def _search_surrounding_for_expandable(self, pix):
+        """Searches around a pixel for other pixels which are influenced by another obstacle
+        and can be further expanded. It returns the one of them, which has got the smallest value.
+        """
+
+        ind_out = None
+        val_out = self._R + 2
+
+        ind = np.array([pix.x, pix.y])
+        search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+
+        for direction in search_directions:
+            new_ind = ind + direction
+            if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                new_pix = self._field[new_ind[0], new_ind[1]]
+                if (0 < new_pix.value < val_out) and (new_pix.parent != pix.parent):
+                    ind_out = new_ind
+                    val_out = new_pix.value
+
+        return ind_out
 
 
     @property
@@ -85,6 +170,7 @@ def set_new_pixel_rep(pix, new_pix, rep_field, occ_shape):
     
     # setting the value of the pixel:
     new_pix.value = pix.value + 1
+    new_pix.parent = (pix.x, pix.y)
     new_pix.grad = np.array([0, 0])
     
     # the gradient of the pixel is the sum of directions which point from neigboring pixels
