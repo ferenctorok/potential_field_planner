@@ -66,7 +66,7 @@ class RepulsiveFieldTests(unittest2.TestCase):
     def test_search_surrounding_for_expandable(self):
         """Tests the _search_surrounding_for_expandable method of the RepulsiveField"""
 
-        field = RepulsiveField(occupancy_grid=self.occupancy_grid)
+        field = RepulsiveField(occupancy_grid=self.occupancy_grid, R=4)
 
         # there is no neighbour to expand:
         for i in range(4, 7):
@@ -77,6 +77,8 @@ class RepulsiveFieldTests(unittest2.TestCase):
         field._field[6, 5].parent = (8, 8)
         field._field[6, 6].parent = (8, 8)
         field._field[6, 6].value = 2
+        field._field[4, 5].value = 5
+        field._field[4, 5].parent = (9, 9)
 
         out = field._search_surrounding_for_expandable(field._field[5, 5])
         self.assertIsNone(out)
@@ -96,6 +98,55 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
         out = field._search_surrounding_for_expandable(field._field[5, 5])
         self.assertTrue((out == np.array([4, 4])).all())
+
+
+    def test_get_first_not_influenced_pixels(self):
+        """Tests the _get_first_not_influenced_pixels method of the RepulsiveField"""
+
+        field = RepulsiveField(occupancy_grid=self.occupancy_grid)
+
+        # first check it if there is nothing to return:
+        # As if an obstacle in (5, 5) would have disappeared, but there is no other obstacle
+        # in the neighbourhood.
+        for i in range(1, self.N - 1):
+            for j in range(1, self.M - 1):
+                field._field[i, j].value = 0
+                field._field[i, j].parent = None
+
+        for i in range(4, 7):
+            for j in range(4, 7):
+                field._field[i, j].value = 2
+                field._field[i, j].parent = (5, 5)
+        
+        out = field._get_first_not_influenced_pixels(np.array([5, 5]))
+        self.assertEqual(out, [])
+
+        # second, check if there is something to return:
+        # As if an obstacle in (5, 5) would have disappeared and there are some other
+        # pixels which are occupied with different parents.
+        for i in range(4, 7):
+            for j in range(4, 7):
+                field._field[i, j].value = 2
+                field._field[i, j].parent = (5, 5)
+
+        field._field[7, 7].parent = (9, 9)
+        field._field[7, 7].value = 3
+        field._field[7, 6].parent = (9, 9)
+        field._field[7, 6].value = 4
+        field._field[7, 5].parent = (9, 9)
+        field._field[7, 5].value = 5
+        field._field[7, 4].parent = (9, 9)
+        field._field[7, 4].value = 1
+        field._field[7, 3].parent = (9, 9)
+        field._field[7, 3].value = 0
+
+        out = field._get_first_not_influenced_pixels(np.array([5, 5]))
+        print(out)
+
+        self.assertEqual(len(out), 2)
+        for ind in [np.array([7, 7]), np.array([7, 4])]:
+            self.assertTrue(array_is_in_list(ind, out))
+
 
 
 

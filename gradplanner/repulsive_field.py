@@ -77,17 +77,18 @@ class RepulsiveField(PotentialField):
                     new_pix = self._field[new_ind[0], new_ind[1]]
                     # if the new_pix's parent was the disappeared obstacle:
                     if new_pix.parent == parent:
-                        # reseting the pixel:
-                        new_pix.value = 0
-                        new_pix.parent = None
                         # searching among the surrounding pixels for a possible new pixel to expand.
                         to_expand = self._search_surrounding_for_expandable(new_pix)
                         if to_expand is not None:
                             indices_out.append(to_expand)
+
+                        # reseting the pixel:
+                        new_pix.value = 0
+                        new_pix.parent = None
                         
                         queue.append(new_ind)
 
-        return indices_out                        
+        return list(np.unique(np.array(indices_out), axis=0))                
     
 
     def _search_surrounding_for_expandable(self, pix):
@@ -96,7 +97,9 @@ class RepulsiveField(PotentialField):
         """
 
         ind_out = None
-        val_out = self._R + 2
+        # R + 1 is the max value a cell can have. It is ok to set val_out to 6 and only look for cells
+        # with smaller values, because a value 6 pixel could not be further expanded.
+        val_out = self._R + 1
 
         ind = np.array([pix.x, pix.y])
         search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
