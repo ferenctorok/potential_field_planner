@@ -36,6 +36,10 @@ class RepulsiveField(PotentialField):
         # indices from which an expansion has to be carried out.
         expandable_indices = self._list_expandable_indices()
 
+        # expanding the expandable indices:
+        for index in expandable_indices:
+            self._expand_pixel(index)
+
 
     def _list_expandable_indices(self):
         """Lists the indices from which updating expansion should be carried out.
@@ -43,16 +47,21 @@ class RepulsiveField(PotentialField):
         that disappeared.
         """
         
-        indices = []
+        indices, values = [], []
         
         for index in self._changed_indices:
             if self._field[index[0], index[1]].value == 1:
                 indices.append(index)
+                values.append(1)
             else:
-                for ind in self._get_first_not_influenced_pixels(index):
-                    indices.append(ind)
+                new_indices, new_values = self._get_first_not_influenced_pixels(index)
+                indices += new_indices
+                values += new_values
 
-        return indices
+        # aranging the indices in a growing order according to their corresponding values:
+        indices, values = np.array(indices), np.array(values)
+        sorted_ind = np.argsort(values)
+        return list(indices[sorted_ind])
 
 
     def _get_first_not_influenced_pixels(self, index):
@@ -61,7 +70,7 @@ class RepulsiveField(PotentialField):
         they will influence the reset pixels.
         """
 
-        indices_out = []
+        indices_out, values_out = [], []
 
         queue = [index]
         parent = (index[0], index[1])
@@ -81,6 +90,7 @@ class RepulsiveField(PotentialField):
                         to_expand = self._search_surrounding_for_expandable(new_pix)
                         if to_expand is not None:
                             indices_out.append(to_expand)
+                            values_out.append(self._field[to_expand[0], to_expand[1]].value)
 
                         # reseting the pixel:
                         new_pix.value = 0
@@ -88,7 +98,13 @@ class RepulsiveField(PotentialField):
                         
                         queue.append(new_ind)
 
-        return list(np.unique(np.array(indices_out), axis=0))                
+        # returning only the unique indices:
+        if indices_out != []:
+            indices_out, values_out = np.array(indices_out), np.array(values_out)
+            indices_out, inds = np.unique(indices_out, return_index=True, axis=0)
+            values_out = values_out[inds]
+
+        return list(indices_out), list(values_out) 
     
 
     def _search_surrounding_for_expandable(self, pix):
@@ -113,6 +129,36 @@ class RepulsiveField(PotentialField):
                     val_out = new_pix.value
 
         return ind_out
+
+
+    def _expand_pixel(self, index):
+        """Expands a pixel until R."""
+
+        # it is possible, that since then the obstacle of this pixel has been deleted.
+        # Then it has got a value of 0 and then the expansion does not have to be carried out:
+        if self._field[index[0], index[1]].value == 0:
+            return
+
+        queue = [index]
+        search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
+
+        while queue:
+            ind = queue.pop(0)
+            pix = self._field[ind[0], ind[1]]
+            # iterate over the neighboring pixels:
+            for direction in search_directions:
+                new_ind = ind + direction
+                if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
+                    new_pix = self._field[new_ind[0], new_ind[1]]
+                    # if the new_pix is free space, calculate the value and the gradient of it:
+                    if (new_pix.value == 0) or (new_pix.value < pix.value + 1):
+                        set_new_pixel_rep(pix, new_pix, self._field, self._grid_shape_arr)
+                        scale_gradient_rep(new_pix, self._R)
+                        # at a distance of R from a boundary the gradient should be already zero, so it is 
+                        # not necessary to further expand a node, which's child will already be over R.
+                        # new_pix - 1 is needed since the value of an obstacle is already 1
+                        if (new_pix.value - 1) < self._R - 1:
+                            queue.append(new_ind)
 
 
     @property
@@ -155,7 +201,7 @@ def get_repulsive_field(occupancy_grid, R):
             new_ind = ind + direction
             if (new_ind >= 0).all() and (new_ind < occ_shape).all():
                 new_pix = rep_field[new_ind[0], new_ind[1]]
-                # if the goal is free space or goal, calculate the value and the gradient of the new pixel:
+                # if the new_pix is free space, calculate the value and the gradient of it:
                 if (new_pix.value == 0):
                     set_new_pixel_rep(pix, new_pix, rep_field, occ_shape)
                     scale_gradient_rep(new_pix, R)

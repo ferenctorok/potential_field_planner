@@ -73,7 +73,6 @@ class AttractorField(PotentialField):
 
         # sorting it according to values.
         sorted_ind = np.argsort(-values)
-
         return indices[sorted_ind]
 
 
