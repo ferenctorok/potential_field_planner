@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from gradplanner.potential_field import PotentialField
 from gradplanner.field_utils import Pixel, get_values_from_field
 from gradplanner.utils import plot_grad_field
 
 
-class AttractorField():
+class AttractorField(PotentialField):
     """Attractor gradient field."""
 
     def __init__(self,
@@ -13,13 +14,13 @@ class AttractorField():
                  goal=None              # np.array(2,): The goal position. 
                  ):
         """Initializes an AttractorField."""
-        self._occupancy_grid = occupancy_grid.copy() if occupancy_grid is not None else None
+        super().__init__(occupancy_grid)
         self._goal = goal.copy() if goal is not None else None
 
-        if self._occupancy_grid is not None:
+        if self._occupancy_grid_is_set:
             self._grid_shape = self._occupancy_grid.shape
             self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
-            if self._goal is not None:
+            if self._goal_is_set:
                 self._init_field()
 
     
@@ -39,7 +40,7 @@ class AttractorField():
 
 
     def update_occupancy_grid(self, new_grid):
-        """Updates the occupancy grid based on a new grid.
+        """Updates the attractor field based on a new grid.
         It creates a list of indices where there has been a change in the occupancy grid.
         self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
         """
@@ -264,22 +265,6 @@ class AttractorField():
         occ_grid_to_plot[goal_i, goal_j] = -1
 
         plot_grad_field(self._field, occ_grid_to_plot)
-
-
-    def plot_potential(self):
-        """Plots the potential values of the grid"""
-        values = get_values_from_field(self._field)
-        M, N = self._grid_shape
-
-        f, ax = plt.subplots(1, 1, figsize=(16, M / N * 16))
-        ax.matshow(values.T)
-        plt.show()
-
-
-    @property
-    def _occupancy_grid_is_set(self):
-        """Returns whether the occupancy grid is set or not."""
-        return self._occupancy_grid is not None
 
     
     @property

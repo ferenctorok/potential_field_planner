@@ -1,5 +1,37 @@
 import numpy as np
+
 from gradplanner.field_utils import Pixel
+from gradplanner.potential_field import PotentialField
+
+
+class RepulsiveField(PotentialField):
+    """Class for the repulsive gradient field."""
+
+    def __init__(self,
+                 occupancy_grid=None,
+                 R=5
+                 ):
+        """Initialize the Repulsive field object."""
+        super().__init__(occupancy_grid)
+        self._R = R
+
+        if self._occupancy_grid is not None:
+            self._grid_shape = self._occupancy_grid.shape
+            self._grid_shape_arr = np.array([self._grid_shape[0], self._grid_shape[1]])
+            self._init_field()
+
+
+    def _init_field(self):
+        """Initializes the repulsive field based on the available occupancy_grid"""
+        assert self._occupancy_grid is not None, "Empty or not provided occupancy grid."
+        self._field = get_repulsive_field(self._occupancy_grid, self._R)
+
+
+    def update_occupancy_grid(self, occupancy_grid):
+        """Updates the repulsive field grid based on a new grid.
+        It creates a list of indices where there has been a change in the occupancy grid.
+        self._diff_grid: 0: no change , 1: new obstacle, -1: obstacle disappeared 
+        """
 
 
 def get_repulsive_field(occupancy_grid, R):
