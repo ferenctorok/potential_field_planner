@@ -95,14 +95,21 @@ class GradController:
         """
 
         ang_diff = self._get_ang_diff(self._goal_ang, self._psi)
-
+        if abs(ang_diff) > self._ang_tolerance:
+            des_ang_vel = - self._K_ang_end * ang_diff
+            if abs(des_ang_vel) > self._max_ang_vel:
+                des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
+            return np.array([0, des_ang_vel])
+        else:
+            self._goal_ang_is_reached = True
+            return np.array([0, 0])
 
     def _get_ang_diff(self, desired, real):
         """gets the orientation difference between the desired
         and the real orientation. The value is always in the range [-pi, pi]
         """
 
-        diff = desired - real
+        diff = real - desired
         if abs(diff) < np.pi:
             return diff
         else:

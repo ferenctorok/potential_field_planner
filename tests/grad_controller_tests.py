@@ -108,35 +108,83 @@ class GradControllerTests(unittest2.TestCase):
         pi = np.pi
 
         desired, real = 5. / 6. * pi, 1. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
 
         desired, real = 1. / 6. * pi, 5. / 6. * pi 
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
 
         desired, real = -5. / 6. * pi, -1. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
 
         desired, real = -1. / 6. * pi, -5. / 6. * pi 
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
 
         desired, real = 1. / 6. * pi, -3. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
 
         desired, real = -1. / 6. * pi, 3. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
 
         desired, real = 5. / 6. * pi, -3. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
 
         desired, real = -5. / 6. * pi, 3. / 6. * pi
-        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
-
-        desired, real = 3. / 6. * pi, -5. / 6. * pi
         self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
 
-        desired, real = -3. / 6. * pi, 5. / 6. * pi
+        desired, real = 3. / 6. * pi, -5. / 6. * pi
         self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
 
+        desired, real = -3. / 6. * pi, 5. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+
+    def test_get_cmd_vel_end(self):
+        """Tests the _get_cmd_vel_end function of the GradController"""
+
+        controller = GradController(occupancy_grid=self.occupancy_grid,
+            goal_pos=self.goal_pos,
+            goal_ang=self.goal_ang,
+            R=self.R,
+            params=self.params)
+        
+        controller._max_ang_vel = 0.1
+        controller._ang_tolerance = 0.05
+
+        pose = np.array([0, 0, 0.16])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, -0.08])).all())
+        self.assertFalse(controller._goal_ang_is_reached)
+
+        pose = np.array([0, 0, -0.16])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, 0.08])).all())
+        self.assertFalse(controller._goal_ang_is_reached)
+
+        pose = np.array([0, 0, 1.6])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, -0.1])).all())
+        self.assertFalse(controller._goal_ang_is_reached)
+
+        pose = np.array([0, 0, -1.6])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, 0.1])).all())
+        self.assertFalse(controller._goal_ang_is_reached)
+
+        pose = np.array([0, 0, 0.04])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, 0])).all())
+        self.assertTrue(controller._goal_ang_is_reached)
+
+        pose = np.array([0, 0, -0.04])
+        controller._set_pose(pose)
+        out = controller._get_cmd_vel_end()
+        self.assertTrue((out == np.array([0, 0])).all())
+        self.assertTrue(controller._goal_ang_is_reached)
 
 
 
