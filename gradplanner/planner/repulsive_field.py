@@ -1,7 +1,7 @@
 import numpy as np
 
-from gradplanner.field_utils import Pixel
-from gradplanner.potential_field import PotentialField
+from gradplanner.planner.field_utils import Pixel
+from gradplanner.planner.potential_field import PotentialField
 
 
 class RepulsiveField(PotentialField):

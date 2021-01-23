@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from gradplanner.potential_field import PotentialField
-from gradplanner.field_utils import Pixel, get_values_from_field
-from gradplanner.utils import plot_grad_field
+from gradplanner.planner.potential_field import PotentialField
+from gradplanner.planner.field_utils import Pixel, get_values_from_field
+from gradplanner.planner.utils import plot_grad_field
 
 
 class AttractorField(PotentialField):
