@@ -202,58 +202,99 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
 
     def test_update_occupancy_grid(self):
-        """Tests the update_occupancy_grid method of the RepulsiveField.
-        field1 is always the etalon and field2 is being modified.
-        """
+        """Tests the update_occupancy_grid method of the RepulsiveField."""
+
+        def carry_out_update_test(occ_old, occ_new):
+            """Carries out the testing of the update_occupancy_grid method.
+            Sets up 2 fields with occ_old and occ_new. Then the one which was set
+            up with occ_old is updated with occ_new. This should result in two
+            identical potential and gradient fields.
+            """
+
+            field1 = RepulsiveField(occupancy_grid=occ_new)
+            field2 = RepulsiveField(occupancy_grid=occ_old)
+
+            field2.update_occupancy_grid(occ_new)
+
+            # testing the values:
+            result_vals1 = get_values_from_field(field1._field)
+            result_vals2 = get_values_from_field(field2._field)
+            self.assertTrue((result_vals1 == result_vals2).all())
+
+            # testing the grads:
+            for i in range(self.N):
+                for j in range(self.M):
+                    self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
 
         ### 1: a new obstacle is inserted. ###
         occ_old = self.occupancy_grid.copy()
         occ_new = self.occupancy_grid.copy()
 
-        # inserting new obstacle in occ_new:
+        # inserting u shaped obstacle in occ_new:
         occ_new[6, 4: 7] = 1
         occ_new[7, 4] = 1
         occ_new[7, 6] = 1
 
-        field1 = RepulsiveField(occupancy_grid=occ_new)
-        field2 = RepulsiveField(occupancy_grid=occ_old)
-
-        field2.update_occupancy_grid(occ_new)
-
-        # testing the values:
-        result_vals1 = get_values_from_field(field1._field)
-        result_vals2 = get_values_from_field(field2._field)
-        self.assertTrue((result_vals1 == result_vals2).all())
-
-        # testing the grads:
-        for i in range(self.N):
-            for j in range(self.M):
-                self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
-
+        # carrying out the tests:
+        carry_out_update_test(occ_old, occ_new)
+        
         ### 2: Obstacle is deleted. ###
         occ_old = self.occupancy_grid.copy()
         occ_new = self.occupancy_grid.copy()
 
-        # inserting new obstacle in occ_new:
+        # inserting u shaped obstacle in occ_old:
         occ_old[6, 4: 7] = 1
         occ_old[7, 4] = 1
         occ_old[7, 6] = 1
 
-        field1 = RepulsiveField(occupancy_grid=occ_new)
-        field2 = RepulsiveField(occupancy_grid=occ_old)
+        # carrying out the tests:
+        carry_out_update_test(occ_old, occ_new)
+        
+        ### 3: one obstacle is inserted and one is deleted:
+        occ_old = self.occupancy_grid.copy()
+        occ_new = self.occupancy_grid.copy()
 
-        field2.update_occupancy_grid(occ_new)
+        # inserting an obstacle in occ_old:
+        occ_old[3, 2] = 1
 
-        # testing the values:
-        result_vals1 = get_values_from_field(field1._field)
-        result_vals2 = get_values_from_field(field2._field)
-        self.assertTrue((result_vals1 == result_vals2).all())
+        # inserting u shaped obstacle in occ_new:
+        occ_new[6, 4: 7] = 1
+        occ_new[7, 4] = 1
+        occ_new[7, 6] = 1
 
-        # testing the grads:
-        for i in range(self.N):
-            for j in range(self.M):
-                self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
+        # carrying out the tests:
+        carry_out_update_test(occ_old, occ_new)
 
+        ### 4: inserting 2 obstacles at once. ###
+        occ_old = self.occupancy_grid.copy()
+        occ_new = self.occupancy_grid.copy()
+
+        # inserting u shaped obstacle in occ_new:
+        occ_new[6, 4: 7] = 1
+        occ_new[7, 4] = 1
+        occ_new[7, 6] = 1
+        # inserting an extra obstacle in occ_new:
+        occ_new[3, 2] = 1
+
+        # carrying out the tests:
+        carry_out_update_test(occ_old, occ_new)
+
+        ### 5: Removing 2 obstacles at once. ###
+        occ_old = self.occupancy_grid.copy()
+        occ_new = self.occupancy_grid.copy()
+
+        # inserting u shaped obstacle in occ_old:
+        occ_old[6, 4: 7] = 1
+        occ_old[7, 4] = 1
+        occ_old[7, 6] = 1
+        # inserting an extra obstacle in occ_old:
+        occ_old[3, 2] = 1
+
+        # carrying out the tests:
+        carry_out_update_test(occ_old, occ_new)
+
+
+        
 
 if __name__ == "__main__":
     unittest2.main()
