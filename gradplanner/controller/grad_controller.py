@@ -96,13 +96,51 @@ class GradController:
 
         ang_diff = self._get_ang_diff(self._goal_ang, self._psi)
         if abs(ang_diff) > self._ang_tolerance:
-            des_ang_vel = - self._K_ang_end * ang_diff
+            des_ang_vel = - self._K_end * ang_diff
             if abs(des_ang_vel) > self._max_ang_vel:
                 des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
             return np.array([0, des_ang_vel])
         else:
             self._goal_ang_is_reached = True
             return np.array([0, 0])
+
+
+    def _get_cmd_vel_visible(self):
+        """Controller for the case when the goal is visible from the current 
+        position of the robot.
+        """
+
+        vect = self._goal_pos - self._pos
+        desired_direction = np.arctan2(vect[1], vect[0])
+        ang_diff = self._get_ang_diff(desired_direction, self._psi)
+
+        # calculating the desired angular velocity:
+        des_ang_vel = - self._K_direct * ang_diff
+        if abs(des_ang_vel) > self._max_ang_vel:
+            des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
+
+        # calculating the desired translational velocity:
+        des_trans_vel = self._get_trans_vel(ang_diff,
+            self._boundar_error_direct, self._max_error_direct)
+        
+        return np.array([des_trans_vel, des_ang_vel])
+        
+
+    def _get_trans_vel(self, ang_diff, boundary_error, max_error):
+        """Gets the desired translational velocity for the robot.
+        - if abs(ang_diff) < boundary_error: max velocity
+        - if boundary_error < abs(ang_diff) < max_error: linearly decreasing
+            velocity between max velocity and 0
+        - else: 0 translational velocity.
+        """
+
+        if abs(ang_diff) < boundary_error:
+            return self._max_trans_vel
+        elif abs(ang_diff) < max_error:
+            ratio = (abs(ang_diff) - boundary_error) / (max_error - boundary_error)
+            return self._max_trans_vel * (1 - ratio)
+        else:
+            return 0
 
     def _get_ang_diff(self, desired, real):
         """gets the orientation difference between the desired
@@ -128,13 +166,15 @@ class GradController:
         self._max_ang_acc = params["general"]["max_ang_acc"]
 
         # grad_mode
-        self._K_grad = params["grad_mode"]["K_grad"]
-        self._max_ang_error = params["grad_mode"]["max_ang_error"]
+        self._K_grad = params["grad_mode"]["K"]
+        self._boundar_error_grad = params["grad_mode"]["boundary_error"]
+        self._max_error_grad = params["grad_mode"]["max_error"]
         self._grad_vel_scaling = params["grad_mode"]["grad_vel_scaling"]
 
         # direct_mode:
-        self._K_pos = params["direct_mode"]["K_pos"]
-        self._K_ang = params["direct_mode"]["K_ang"]
+        self._K_direct = params["direct_mode"]["K"]
+        self._boundar_error_direct = params["direct_mode"]["boundary_error"]
+        self._max_error_direct = params["direct_mode"]["max_error"]
 
         # end_mode:
-        self._K_ang_end = params["end_mode"]["K_ang_end"]
+        self._K_end = params["end_mode"]["K_end"]

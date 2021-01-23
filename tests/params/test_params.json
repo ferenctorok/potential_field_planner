@@ -8,15 +8,17 @@
         "max_ang_acc": 1.5708
     },
     "grad_mode": {
-        "K_grad": 0.5,
-        "max_ang_error": 1.0472,
+        "K": 0.5,
+        "boundary_error": 0.2,
+        "max_error": 1.0472,
         "grad_vel_scaling": false
     },
     "direct_mode": {
-        "K_pos": 0.5,
-        "K_ang": 0.5
+        "K": 0.5,
+        "boundary_error": 0.2,
+        "max_error": 1.0472
     },
     "end_mode": {
-        "K_ang_end": 0.5
+        "K_end": 0.5
     }
 }

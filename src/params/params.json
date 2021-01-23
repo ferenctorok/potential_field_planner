@@ -13,10 +13,9 @@
         "grad_vel_scaling": false
     },
     "direct_mode": {
-        "K_pos": 0.5,
-        "K_ang": 0.5
+        "K_visible": 0.5
     },
     "end_mode": {
-        "K_ang_end": 0.5
+        "K_end": 0.5
     }
 }
