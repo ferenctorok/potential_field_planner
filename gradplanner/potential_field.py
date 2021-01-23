@@ -45,7 +45,8 @@ class PotentialField:
                         self._field[index[0], index[1]].value = 0
                     else:
                         self._field[index[0], index[1]].value = 1
-                        self._field[index[0], index[1]].grad = np.array([0, 0])
+                    self._field[index[0], index[1]].grad = np.array([0, 0])
+                    self._field[index[0], index[1]].parent = None
                         
                 self._update_field()
         else:

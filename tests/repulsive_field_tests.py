@@ -81,10 +81,9 @@ class RepulsiveFieldTests(unittest2.TestCase):
         field._field[4, 5].parent = (9, 9)
 
         out = field._search_surrounding_for_expandable(field._field[5, 5])
-        self.assertIsNone(out)
+        self.assertEqual(out, [])
 
-        # there is a neighbor to return:
-        # there is no neighbour to expand:
+        # there are neighbors to return:
         for i in range(4, 7):
             for j in range(4, 7):
                 field._field[i, j].value = 3
@@ -97,7 +96,10 @@ class RepulsiveFieldTests(unittest2.TestCase):
         field._field[4, 4].value = 2
 
         out = field._search_surrounding_for_expandable(field._field[5, 5])
-        self.assertTrue((out == np.array([4, 4])).all())
+        
+        self.assertEqual(len(out), 5)
+        for ind in [np.array([5, 6]), np.array([4, 6]), np.array([4, 4]), np.array([5, 4]), np.array([6, 4])]:
+            self.assertTrue(array_is_in_list(ind, out))
 
 
     def test_get_first_not_influenced_pixels(self):
@@ -145,9 +147,9 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
         indices, values = field._get_first_not_influenced_pixels(np.array([5, 5]))
 
-        self.assertEqual(len(indices), 2)
-        self.assertEqual(len(values), 2)
-        for ind in [np.array([7, 7]), np.array([7, 4])]:
+        self.assertEqual(len(indices), 3)
+        self.assertEqual(len(values), 3)
+        for ind in [np.array([7, 7]), np.array([7, 6]), np.array([7, 4])]:
             self.assertTrue(array_is_in_list(ind, indices))
 
 
@@ -188,8 +190,8 @@ class RepulsiveFieldTests(unittest2.TestCase):
         field._changed_indices = [np.array([5, 5]), np.array([2, 2])]
         out = field._list_expandable_indices()
 
-        self.assertEqual(len(out), 3)
-        for ind in [np.array([7, 7]), np.array([7, 4]), np.array([2, 2])]:
+        self.assertEqual(len(out), 4)
+        for ind in [np.array([7, 7]), np.array([7, 6]), np.array([7, 4]), np.array([2, 2])]:
             self.assertTrue(array_is_in_list(ind, out))
 
         # check wether they are really in growing order:
@@ -218,8 +220,29 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
         field2.update_occupancy_grid(occ_new)
 
-        field1.plot_grad()
-        field2.plot_grad()
+        # testing the values:
+        result_vals1 = get_values_from_field(field1._field)
+        result_vals2 = get_values_from_field(field2._field)
+        self.assertTrue((result_vals1 == result_vals2).all())
+
+        # testing the grads:
+        for i in range(self.N):
+            for j in range(self.M):
+                self.assertTrue((field1._field[i, j].grad == field2._field[i, j].grad).all())
+
+        ### 2: Obstacle is deleted. ###
+        occ_old = self.occupancy_grid.copy()
+        occ_new = self.occupancy_grid.copy()
+
+        # inserting new obstacle in occ_new:
+        occ_old[6, 4: 7] = 1
+        occ_old[7, 4] = 1
+        occ_old[7, 6] = 1
+
+        field1 = RepulsiveField(occupancy_grid=occ_new)
+        field2 = RepulsiveField(occupancy_grid=occ_old)
+
+        field2.update_occupancy_grid(occ_new)
 
         # testing the values:
         result_vals1 = get_values_from_field(field1._field)
