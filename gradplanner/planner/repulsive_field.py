@@ -173,6 +173,13 @@ class RepulsiveField(PotentialField):
                             queue.append(new_ind)
 
 
+    def is_influenced(self, i, j):
+        """Returns True if the cell (i, j) is influenced by any obstacle or if
+        (i, j) is obstalce.
+        """
+        return (self._field[i, j].value != 0)
+
+
     @property
     def _everything_is_set_for_init(self):
         """True, if everything is set for initializing a potential field."""

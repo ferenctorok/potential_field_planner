@@ -1,5 +1,6 @@
 import unittest2
 import numpy as np
+import json
 
 from gradplanner.controller.grad_controller import GradController
 from gradplanner.planner.attractor_field import AttractorField
@@ -10,12 +11,15 @@ class GradControllerTests(unittest2.TestCase):
 
     def setUp(self):
         """Sets up the tests."""
-        self.param_file = "params/test_params.json"
+        param_file = "params/test_params.json"
+        with open(param_file) as f:
+            self.params = json.load(f)
 
         self.N, self.M = 10, 12
         self.occupancy_grid = np.ones((self.N, self.M))
         self.occupancy_grid[1: -1, 1: -1] = 0
-        self.goal = np.array([5, 5])
+        self.goal_pos = np.array([5.2, 5.4])
+        self.goal_ang = 0
         self.R = 4
 
 
@@ -23,12 +27,14 @@ class GradControllerTests(unittest2.TestCase):
         """Tests the __init__ function of the GradController"""
 
         controller = GradController(occupancy_grid=self.occupancy_grid,
-            goal= self.goal,
+            goal_pos=self.goal_pos,
+            goal_ang=self.goal_ang,
             R=self.R,
-            param_file=self.param_file)
+            params=self.params)
         
         self.assertTrue((controller._occupancy_grid == self.occupancy_grid).all())
-        self.assertTrue((controller._goal == self.goal).all())
+        self.assertTrue((controller._goal_pos == self.goal_pos).all())
+        self.assertEqual(controller._goal_ang, self.goal_ang)
         self.assertEqual(controller._R, self.R)
 
         self.assertIsInstance(controller._attractor, AttractorField)
@@ -47,6 +53,47 @@ class GradControllerTests(unittest2.TestCase):
         self.assertEqual(controller._K_pos, 0.5)
         self.assertEqual(controller._K_ang, 0.5)
         self.assertEqual(controller._K_ang_end, 0.5)
+
+
+    def test_set_pose(self):
+        """Tests the _set_pose function of the GradController"""
+
+        controller = GradController(occupancy_grid=self.occupancy_grid,
+            goal_pos=self.goal_pos,
+            goal_ang=self.goal_ang,
+            R=self.R,
+            params=self.params)
+
+        pose = np.array([4.3, 8.7, -0.3])
+        controller._set_pose(pose)
+
+        self.assertTrue((controller._pos == np.array([4.3, 8.7])).all())
+        self.assertEqual(controller._x, 4.3)
+        self.assertEqual(controller._y, 8.7)
+        self.assertEqual(controller._psi, -0.3)
+        self.assertEqual(controller._i, 4)
+        self.assertEqual(controller._j, 8)
+
+
+    def test_goal_is_visible(self):
+        """Tests the _goal_is_visible function of the GradController"""
+
+        controller = GradController(occupancy_grid=self.occupancy_grid,
+            goal_pos=self.goal_pos,
+            goal_ang=self.goal_ang,
+            R=self.R,
+            params=self.params)
+
+        # there is an obstacle between the position and the goal:
+        controller._occupancy_grid[6, 5] = 1
+        pose = np.array([8.3, 5.6, 0.3])
+        controller._set_pose(pose)
+
+        self.assertFalse(controller._goal_is_visible())
+
+        # there is no obstacle between the position and the goal:
+        pose = np.array([5.6, 8.3, 0.3])
+        controller._set_pose(pose)
 
 
 if __name__ == "__main__":
