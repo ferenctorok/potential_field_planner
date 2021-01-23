@@ -96,5 +96,49 @@ class GradControllerTests(unittest2.TestCase):
         controller._set_pose(pose)
 
 
+    def test_get_ang_diff(self):
+        """Tests the _get_ang_diff function of the GradController"""
+
+        controller = GradController(occupancy_grid=self.occupancy_grid,
+            goal_pos=self.goal_pos,
+            goal_ang=self.goal_ang,
+            R=self.R,
+            params=self.params)
+
+        pi = np.pi
+
+        desired, real = 5. / 6. * pi, 1. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+
+        desired, real = 1. / 6. * pi, 5. / 6. * pi 
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+        desired, real = -5. / 6. * pi, -1. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+        desired, real = -1. / 6. * pi, -5. / 6. * pi 
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+
+        desired, real = 1. / 6. * pi, -3. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+
+        desired, real = -1. / 6. * pi, 3. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+        desired, real = 5. / 6. * pi, -3. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+        desired, real = -5. / 6. * pi, 3. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+
+        desired, real = 3. / 6. * pi, -5. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), -4. / 6. * pi))
+
+        desired, real = -3. / 6. * pi, 5. / 6. * pi
+        self.assertTrue(np.isclose(controller._get_ang_diff(desired, real), 4. / 6. * pi))
+
+
+
+
 if __name__ == "__main__":
     unittest2.main()

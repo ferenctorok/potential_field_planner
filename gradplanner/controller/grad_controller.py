@@ -94,8 +94,20 @@ class GradController:
         position, only the orientation has to be changed.
         """
 
-        ang_diff = self._get_ang_diff(self._)
-            
+        ang_diff = self._get_ang_diff(self._goal_ang, self._psi)
+
+
+    def _get_ang_diff(self, desired, real):
+        """gets the orientation difference between the desired
+        and the real orientation. The value is always in the range [-pi, pi]
+        """
+
+        diff = desired - real
+        if abs(diff) < np.pi:
+            return diff
+        else:
+            return diff - np.sign(diff) * 2 * np.pi
+    
 
     def _set_from_params(self, params):
         """Sets up some values based on params."""
