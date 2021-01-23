@@ -144,6 +144,15 @@ class RepulsiveField(PotentialField):
 
         while queue:
             ind = queue.pop(0)
+
+            #######################
+            # for debugging: It alwas plots, which pixel is popped
+            #oldval = self._field[ind[0], ind[1]].value
+            #self._field[ind[0], ind[1]].value = 10
+            #self.plot_potential()
+            #self._field[ind[0], ind[1]].value = oldval
+            ######################
+
             pix = self._field[ind[0], ind[1]]
             # iterate over the neighboring pixels:
             for direction in search_directions:
@@ -151,7 +160,7 @@ class RepulsiveField(PotentialField):
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
                     new_pix = self._field[new_ind[0], new_ind[1]]
                     # if the new_pix is free space, calculate the value and the gradient of it:
-                    if (new_pix.value == 0) or (new_pix.value < pix.value + 1):
+                    if (new_pix.value == 0) or (new_pix.value > pix.value):
                         set_new_pixel_rep(pix, new_pix, self._field, self._grid_shape_arr)
                         scale_gradient_rep(new_pix, self._R)
                         # at a distance of R from a boundary the gradient should be already zero, so it is 
@@ -221,12 +230,17 @@ def set_new_pixel_rep(pix, new_pix, rep_field, occ_shape):
     new_pix.value = pix.value + 1
     new_pix.parent = (pix.x, pix.y)
     new_pix.grad = np.array([0, 0])
+
+    # there is a special case, where we need grad = np.array([0, 0]). It is detailed in
+    # the function is_special_case():
+    if is_special_case(new_pix, rep_field, occ_shape):
+        return
     
     # the gradient of the pixel is the sum of directions which point from neigboring pixels
     # with smaller values to this point. The summed vector is normalized at the end.
     ind = np.array([new_pix.x, new_pix.y])
     search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
-    
+
     for direction in search_directions:
         old_ind = ind + direction
         if (old_ind >= 0).all() and (old_ind < occ_shape).all():
@@ -244,3 +258,29 @@ def scale_gradient_rep(new_pix, R):
     Between them the length varies linearly.
     """
     new_pix.grad = new_pix.grad * (1 - (new_pix.value - 2) / R)
+
+
+def is_special_case(new_pix, field, occ_shape):
+    """There is a special case, where we would like to return grad = np.array([0, 0])
+    no matter, how the other pixels are. This is the case, when on 2 opposite sides
+    of the pixel are obstacles. This of course can only happen, if the pixel is
+    a neighbour of obstacles, so if its value is 2.
+    """
+
+    if new_pix.value == 2:
+        ind = np.array([new_pix.x, new_pix.y])
+        ind1, ind2 = ind + [1, 0], ind - [1, 0]
+        ind3, ind4 = ind + [0, 1], ind - [0, 1]
+
+        if ((ind1 >= 0).all() and (ind1 < occ_shape).all()) and\
+           ((ind2 >= 0).all() and (ind2 < occ_shape).all()) and\
+           (field[ind1[0], ind1[1]].value == 1) and\
+           (field[ind2[0], ind2[1]].value == 1):
+           return True
+        elif ((ind3 >= 0).all() and (ind3 < occ_shape).all()) and\
+             ((ind4 >= 0).all() and (ind4 < occ_shape).all()) and\
+             (field[ind3[0], ind3[1]].value == 1) and\
+             (field[ind4[0], ind4[1]].value == 1):
+            return True
+
+    return False

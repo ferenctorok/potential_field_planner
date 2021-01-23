@@ -218,9 +218,6 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
         field2.update_occupancy_grid(occ_new)
 
-        field1.plot_potential()
-        field2.plot_potential()
-
         field1.plot_grad()
         field2.plot_grad()
 

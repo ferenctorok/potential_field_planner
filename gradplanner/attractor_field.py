@@ -132,7 +132,7 @@ class AttractorField(PotentialField):
             ind = queue.pop(0)
 
             #######################
-            # for debugging:
+            # for debugging: It alwas plots, which pixel is popped
             #oldval = self._field[ind[0], ind[1]].value
             #self._field[ind[0], ind[1]].value = 10
             #self.plot_potential()
