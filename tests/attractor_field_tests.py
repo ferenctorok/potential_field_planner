@@ -1,9 +1,9 @@
 import unittest2
 import numpy as np
 
-from gradplanner.attractor_field import AttractorField
-from gradplanner.utils import array_is_in_list
-from gradplanner.field_utils import get_values_from_field
+from gradplanner.planner.attractor_field import AttractorField
+from gradplanner.planner.utils import array_is_in_list
+from gradplanner.planner.field_utils import get_values_from_field
 
 
 class AttractorFieldTests(unittest2.TestCase):

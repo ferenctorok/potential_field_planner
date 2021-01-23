@@ -1,9 +1,9 @@
 import unittest2
 import numpy as np
 
-from gradplanner.repulsive_field import RepulsiveField
-from gradplanner.utils import array_is_in_list
-from gradplanner.field_utils import get_values_from_field
+from gradplanner.planner.repulsive_field import RepulsiveField
+from gradplanner.planner.utils import array_is_in_list
+from gradplanner.planner.field_utils import get_values_from_field
 
 class RepulsiveFieldTests(unittest2.TestCase):
     """Tests of te RepulsiveField class."""
@@ -237,7 +237,7 @@ class RepulsiveFieldTests(unittest2.TestCase):
 
         # carrying out the tests:
         carry_out_update_test(occ_old, occ_new)
-        
+
         ### 2: Obstacle is deleted. ###
         occ_old = self.occupancy_grid.copy()
         occ_new = self.occupancy_grid.copy()
