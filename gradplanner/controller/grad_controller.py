@@ -96,10 +96,7 @@ class GradController:
 
         ang_diff = self._get_ang_diff(self._goal_ang, self._psi)
         if abs(ang_diff) > self._ang_tolerance:
-            des_ang_vel = - self._K_end * ang_diff
-            if abs(des_ang_vel) > self._max_ang_vel:
-                des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
-            return np.array([0, des_ang_vel])
+            return np.array([0, self._get_ang_vel(ang_diff, self._K_end)])
         else:
             self._goal_ang_is_reached = True
             return np.array([0, 0])
@@ -115,16 +112,25 @@ class GradController:
         ang_diff = self._get_ang_diff(desired_direction, self._psi)
 
         # calculating the desired angular velocity:
-        des_ang_vel = - self._K_direct * ang_diff
-        if abs(des_ang_vel) > self._max_ang_vel:
-            des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
+        des_ang_vel = self._get_ang_vel(ang_diff, self._K_direct)
 
         # calculating the desired translational velocity:
         des_trans_vel = self._get_trans_vel(ang_diff,
             self._boundar_error_direct, self._max_error_direct)
         
         return np.array([des_trans_vel, des_ang_vel])
+
+
+    def _get_ang_vel(self, ang_diff, K):
+        """Gets the desired velocity based on a simple proportional
+        relationship with the error. It also respects the max angular velocity."""
+
+        des_ang_vel = - self._K_direct * ang_diff
+        if abs(des_ang_vel) > self._max_ang_vel:
+            des_ang_vel = np.sign(des_ang_vel) * self._max_ang_vel
         
+        return des_ang_vel
+
 
     def _get_trans_vel(self, ang_diff, boundary_error, max_error):
         """Gets the desired translational velocity for the robot.
