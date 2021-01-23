@@ -37,9 +37,7 @@ class RepulsiveField(PotentialField):
         expandable_indices = self._list_expandable_indices()
 
         # expanding the expandable indices:
-        #for index in expandable_indices:
-        #    self._expand_pixel(index)
-        self._expand_pixel(expandable_indices)
+        self._expand_pixels(expandable_indices)
 
         # refresh the gradients of the expandable indices, because they might have been
         # influenced by the changes:
@@ -92,12 +90,6 @@ class RepulsiveField(PotentialField):
                 new_ind = ind + direction
                 if (new_ind >= 0).all() and (new_ind < self._grid_shape_arr).all():
                     new_pix = self._field[new_ind[0], new_ind[1]]
-                    ################
-                    #oldval = new_pix.value
-                    #new_pix.value = 5
-                    #self.plot_potential()
-                    #new_pix.value = oldval
-                    ################
                     # if the new_pix's parent was the disappeared obstacle:
                     if new_pix.parent == parent:
                         # searching among the surrounding pixels for a possible new pixel to expand.
@@ -107,13 +99,9 @@ class RepulsiveField(PotentialField):
                             values_out.append(self._field[to_expand[0], to_expand[1]].value)
 
                         # reseting the pixel:
-                        #################
-                        #new_pix.value = 20
-                        #self.plot_potential()
-                        #################
-
                         new_pix.value = 0
                         new_pix.parent = None
+                        new_pix.grad = np.array([0, 0])
                         
                         queue.append(new_ind)
 
@@ -145,16 +133,10 @@ class RepulsiveField(PotentialField):
         return ind_out
 
 
-    def _expand_pixel(self, index):
+    def _expand_pixels(self, indices):
         """Expands a pixel until R."""
 
-        # it is possible, that since then the obstacle of this pixel has been deleted.
-        # Then it has got a value of 0 and then the expansion does not have to be carried out:
-        #if self._field[index[0], index[1]].value == 0:
-        #    return
-
-        #queue = [index]
-        queue = index.copy()
+        queue = indices.copy()
         search_directions = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]]
 
         while queue:
@@ -304,6 +286,10 @@ def set_gradient(new_pix, rep_field, occ_shape):
     # there is a special case, where we need grad = np.array([0, 0]). It is detailed in
     # the function is_special_case():
     if is_special_case(new_pix, rep_field, occ_shape):
+        return
+    
+    # If the pixel has got a value 0 or 1, it has to have a gradient of 0:
+    if new_pix.value <= 1:
         return
     
     # the gradient of the pixel is the sum of directions which point from neigboring pixels
