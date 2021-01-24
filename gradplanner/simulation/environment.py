@@ -19,7 +19,7 @@ class PointRobotEnv:
         self._fig = None
         self._state = np.zeros(5)
         self._robot = PointRobot(Ts=Ts, params=sim_params)
-        elf._set_from_params(sim_params)
+        self._set_from_params(sim_params)
 
 
     def step(self, u):
@@ -46,24 +46,24 @@ class PointRobotEnv:
         if self._fig is None:
             self._fig = plt.figure(1)
             self._ax = plt.gca()
-            self._robo_artist = Rectangle((self._state[0], self._state[1]),
-                2, 1, angle=self.state[3], color='#EC66BA') 
-            self._ax.add_artist(self._robo_artist)
-            self._goal_artist = Rectangle((self._goal_x, self._goal_y),
-                2, 1, angle=self._goal_psi, color="#37EC52")
-            self._ax.add_artist(self._goal_artist)
-
+        
+        # clearing the axis:
         self._ax.cla()
-        self._ax.add_artist(self._robo_artist)
-        self._ax.add_artist(self._goal_artist)
-        cmap = ListedColormap(['#240B3B', '#81BEF7'])
-        self._ax.matshow(self._occ_grid, cmap=cmap)
-        self._robo_artist.set_xy((self._state[0], self._state[1]))
-        self._robo_artist.set_alpha(self._state[3])
-        self._goal_artist.set_xy((self._goal_x[0], self._goal_psi[1]))
-        self._goal_artist.set_alpha(self._goal_psi)
+        
+        # setting the rectangles of the robot and the goal:
+        self._robo_patch = Rectangle((self._state[0], self._state[1]),
+            2, 1, angle=np.deg2rad(self._state[3]), color='r') 
+        self._ax.add_patch(self._robo_patch)
 
-        plt.pause(self._Ts)
+        self._goal_patch = Rectangle((self._goal_x, self._goal_y),
+            2, 1, angle=np.deg2rad(self._goal_psi))
+        self._ax.add_patch(self._goal_patch)
+
+        # plotting the occupancy_grid:
+        self._ax.matshow(self._occ_grid)
+
+        #plt.pause(self._Ts)
+        plt.show()
 
 
     def _set_from_params(self, params):
