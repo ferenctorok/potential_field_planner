@@ -35,6 +35,16 @@ class PointRobot:
         return np.array([self._x, self._y, self._v, self._psi, self._omega])
 
 
+    def set_state(self, state):
+        """Sets the state of the robot."""
+
+        self._x = state[0]
+        self._y = state[1]
+        self._v = state[2]
+        self._psi = state[3]
+        self._omega = state[4]
+
+
     def _init_from_params(self, params):
         """Initializes some variables from the params.""" 
 
