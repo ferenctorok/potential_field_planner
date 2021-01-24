@@ -11,7 +11,7 @@ class GradControllerTests(unittest2.TestCase):
 
     def setUp(self):
         """Sets up the tests."""
-        param_file = "params/test_params.json"
+        param_file = "tests/params/test_params.json"
         with open(param_file) as f:
             self.params = json.load(f)
 
