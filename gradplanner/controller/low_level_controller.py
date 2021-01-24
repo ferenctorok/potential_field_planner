@@ -54,7 +54,7 @@ class LowLevelController:
     def _init_from_params(self, params):
         """Initializes some variables from the params."""
 
-        self._Ts = params["genera"]["Ts"]
+        self._Ts = params["general"]["Ts"]
         self._acc_min = params["LowLevelController"]["acc_min"]
         self._acc_max = params["LowLevelController"]["acc_max"]
         self._epsilon_min = params["LowLevelController"]["epsilon_min"]

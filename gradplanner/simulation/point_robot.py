@@ -45,6 +45,11 @@ class PointRobot:
         self._omega = state[4]
 
 
+    def get_state(self):
+        """Returns the actual state."""
+        return np.array([self._x, self._y, self._v, self._psi, self._omega])
+
+
     def _init_from_params(self, params):
         """Initializes some variables from the params.""" 
 

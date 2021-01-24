@@ -21,7 +21,7 @@ def set_up_occ_grid(params):
         j = params["obstacles"][key]["j"]
         grid[i[0]: i[1], j[0]: j[1]] = 1
     
-    return grid
+    return grid    
 
 
 if __name__ == "__main__":

@@ -4,10 +4,11 @@
     },
     "GradController": {
         "general": {
+            "R": 6,
             "pos_tolerance": 0.1,
             "ang_tolerance": 0.2,
-            "max_trans_vel": 1,
-            "max_trans_acc": 1,
+            "max_trans_vel": 4,
+            "max_trans_acc": 2,
             "max_ang_vel": 1.5708,
             "max_ang_acc": 1.5708
         },
@@ -27,8 +28,8 @@
         }
     },
     "LowLevelController": {
-        "acc_min": -1,
-        "acc_max": 1,
+        "acc_min": -2,
+        "acc_max": 2,
         "epsilon_min": -1.5708,
         "epsilon_max": 1.5708
     }

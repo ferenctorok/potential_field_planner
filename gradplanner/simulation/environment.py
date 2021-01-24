@@ -62,8 +62,12 @@ class PointRobotEnv:
         # plotting the occupancy_grid:
         self._ax.matshow(self._occ_grid)
 
-        #plt.pause(self._Ts)
-        plt.show()
+        plt.pause(self._Ts)
+
+
+    def get_state(self):
+        """Returns the actual state."""
+        return self._robot.get_state()
 
 
     def _set_from_params(self, params):

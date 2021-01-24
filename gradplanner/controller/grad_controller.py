@@ -77,12 +77,12 @@ class GradController:
             vect = self._goal_pos - self._pos
             distance = np.linalg.norm(vect)
             vect = vect / distance
-            N = np.floor(distance)
+            N = int(np.floor(distance))
             point = self._pos
 
             for _ in range(N):
                 point += vect
-                i, j = np.floor(point[0]), np.floor(point[1])
+                i, j = int(np.floor(point[0])), int(np.floor(point[1]))
                 if self._occupancy_grid[i, j] == 1:
                     return False
             
@@ -167,7 +167,7 @@ class GradController:
         eps = 1e-6
         length = np.linalg.norm(grad)
         if length > eps:
-            return self.grad / length
+            return grad / length
         else:
             return np.array([0, 0])
 
@@ -209,7 +209,13 @@ class GradController:
             return diff
         else:
             return diff - np.sign(diff) * 2 * np.pi
+
     
+    @property
+    def goal_is_reached(self):
+        """Returns true if the goal is reached."""
+        return self._goal_pos_is_reached and self._goal_ang_is_reached
+
 
     def _set_from_params(self, params):
         """Sets up some values based on params."""
