@@ -49,9 +49,9 @@ class GradController:
             else:
                 return self._get_cmd_vel_end()
         if self._goal_is_visible():
-            return self._get_cmd_vel_visible()
+            return self._get_cmd_vel_direct()
         else:
-            return self._get_cmd_vel_grad(pose)
+            return self._get_cmd_vel_grad()
 
 
     def _set_pose(self, pose):
@@ -102,7 +102,7 @@ class GradController:
             return np.array([0, 0])
 
 
-    def _get_cmd_vel_visible(self):
+    def _get_cmd_vel_direct(self):
         """Controller for the case when the goal is visible from the current 
         position of the robot.
         """
@@ -121,6 +121,57 @@ class GradController:
         return np.array([des_trans_vel, des_ang_vel])
 
 
+    def _get_cmd_vel_grad(self):
+        """Controller for the case when the robot is in the influenced
+        area of obstacles. It uses 3 pixels from the occupancy grid:
+        - 1: The pixel it is in.
+        - 2 and 3: neares neighboring pixels. 
+        """
+
+        grad1 = self._attractor.get_grad(self._i, self._j) +\
+            self._repulsive.get_grad(self._i, self._j)
+
+        i1, j1 = np.round(self._i), np.round(self._j)
+        if (j1 >= 0) and (j1 < self._occupancy_grid.shape[1]):
+            grad2 = self._attractor.get_grad(self._i, j1) +\
+                self._repulsive.get_grad(self._i, j1)
+        else:
+            grad2 = np.array([0, 0])
+
+        if (i1 >= 0) and (i1 < self._occupancy_grid.shape[0]):
+            grad3 = self._attractor.get_grad(i1, self._j) +\
+                self._repulsive.get_grad(i1, self._j)
+        else:
+            grad3 = np.array([0, 0])
+
+        grad = self._norm_grad(grad1) + self._norm_grad(grad2) +\
+            self._norm_grad(grad3)
+
+        # getting the desired angular and translational velocity:
+        desired_direction = np.arctan2(grad[1], grad[0])
+        ang_diff = self._get_ang_diff(desired_direction, self._psi)
+
+        # calculating the desired angular velocity:
+        des_ang_vel = self._get_ang_vel(ang_diff, self._K_grad)
+
+        # calculating the desired translational velocity:
+        des_trans_vel = self._get_trans_vel(ang_diff,
+            self._boundar_error_grad, self._max_error_grad)
+
+        return np.array([des_trans_vel, des_ang_vel])
+
+
+    def _norm_grad(self, grad):
+        """Normalizes a gradient"""
+
+        eps = 1e-6
+        length = np.linalg.norm(grad)
+        if length > eps:
+            return self.grad / length
+        else:
+            return np.array([0, 0])
+
+    
     def _get_ang_vel(self, ang_diff, K):
         """Gets the desired velocity based on a simple proportional
         relationship with the error. It also respects the max angular velocity."""
@@ -164,23 +215,23 @@ class GradController:
         """Sets up some values based on params."""
 
         # general
-        self._pos_tolerance = params["general"]["pos_tolerance"]
-        self._ang_tolerance = params["general"]["ang_tolerance"]
-        self._max_trans_vel = params["general"]["max_trans_vel"]
-        self._max_trans_acc = params["general"]["max_trans_acc"]
-        self._max_ang_vel = params["general"]["max_ang_vel"]
-        self._max_ang_acc = params["general"]["max_ang_acc"]
+        self._pos_tolerance = params["GradController"]["general"]["pos_tolerance"]
+        self._ang_tolerance = params["GradController"]["general"]["ang_tolerance"]
+        self._max_trans_vel = params["GradController"]["general"]["max_trans_vel"]
+        self._max_trans_acc = params["GradController"]["general"]["max_trans_acc"]
+        self._max_ang_vel = params["GradController"]["general"]["max_ang_vel"]
+        self._max_ang_acc = params["GradController"]["general"]["max_ang_acc"]
 
         # grad_mode
-        self._K_grad = params["grad_mode"]["K"]
-        self._boundar_error_grad = params["grad_mode"]["boundary_error"]
-        self._max_error_grad = params["grad_mode"]["max_error"]
-        self._grad_vel_scaling = params["grad_mode"]["grad_vel_scaling"]
+        self._K_grad = params["GradController"]["grad_mode"]["K"]
+        self._boundar_error_grad = params["GradController"]["grad_mode"]["boundary_error"]
+        self._max_error_grad = params["GradController"]["grad_mode"]["max_error"]
+        self._grad_vel_scaling = params["GradController"]["grad_mode"]["grad_vel_scaling"]
 
         # direct_mode:
-        self._K_direct = params["direct_mode"]["K"]
-        self._boundar_error_direct = params["direct_mode"]["boundary_error"]
-        self._max_error_direct = params["direct_mode"]["max_error"]
+        self._K_direct = params["GradController"]["direct_mode"]["K"]
+        self._boundar_error_direct = params["GradController"]["direct_mode"]["boundary_error"]
+        self._max_error_direct = params["GradController"]["direct_mode"]["max_error"]
 
         # end_mode:
-        self._K_end = params["end_mode"]["K_end"]
+        self._K_end = params["GradController"]["end_mode"]["K_end"]

@@ -79,6 +79,11 @@ class PotentialField:
         ax.matshow(values.T)
         plt.show()
 
+    
+    def get_grad(self, i, j):
+        """returns the gradient of the pixel at (i, j)"""
+        return self._field[i, j].grad
+
 
     @property
     def _occupancy_grid_is_set(self):

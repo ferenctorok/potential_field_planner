@@ -1,24 +1,35 @@
 {
     "general": {
-        "pos_tolerance": 0.1,
-        "ang_tolerance": 0.2,
-        "max_trans_vel": 1,
-        "max_trans_acc": 1,
-        "max_ang_vel": 1.5708,
-        "max_ang_acc": 1.5708
+        "Ts": 0.05
     },
-    "grad_mode": {
-        "K": 0.5,
-        "boundary_error": 0.2,
-        "max_error": 1.0472,
-        "grad_vel_scaling": false
+    "GradController": {
+        "general": {
+            "pos_tolerance": 0.1,
+            "ang_tolerance": 0.2,
+            "max_trans_vel": 1,
+            "max_trans_acc": 1,
+            "max_ang_vel": 1.5708,
+            "max_ang_acc": 1.5708
+        },
+        "grad_mode": {
+            "K": 0.5,
+            "boundary_error": 0.2,
+            "max_error": 1.0472,
+            "grad_vel_scaling": false
+        },
+        "direct_mode": {
+            "K": 0.5,
+            "boundary_error": 0.2,
+            "max_error": 1.0472
+        },
+        "end_mode": {
+            "K_end": 0.5
+        }
     },
-    "direct_mode": {
-        "K": 0.5,
-        "boundary_error": 0.2,
-        "max_error": 1.0472
-    },
-    "end_mode": {
-        "K_end": 0.5
+    "LowLevelController": {
+        "acc_min": -1,
+        "acc_max": 1,
+        "epsilon_min": -1.5708,
+        "epsilon_max": 1.5708
     }
 }
