@@ -80,6 +80,11 @@ class PotentialField:
         plt.show()
 
     
+    def get_val(self, i, j):
+        """Returns the value at position (i, j)."""
+        return self._field[i, j].value
+
+
     def get_grad(self, i, j):
         """returns the gradient of the pixel at (i, j)"""
         return self._field[i, j].grad

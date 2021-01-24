@@ -70,10 +70,11 @@ class GradController:
 
     def _goal_is_visible(self):
         """Returns true if there is no obstacle between the robot and the goal and
-        the robot is not in the effected area of any obstacle.
+        the robot is at least self._min_obst_dist away from the nearest obstacle.
         """
         
-        if self._repulsive.is_influenced(self._i, self._j):
+        val = self._repulsive.get_val(self._i, self._j)
+        if (0 < val < self._min_obst_dist):
             return False
         else:
             # carry out a raytracing:
@@ -240,6 +241,7 @@ class GradController:
         self._grad_vel_scaling = params["GradController"]["grad_mode"]["grad_vel_scaling"]
 
         # direct_mode:
+        self._min_obst_dist = params["GradController"]["direct_mode"]["min_obst_dist"]
         self._K_direct = params["GradController"]["direct_mode"]["K"]
         self._boundar_error_direct = params["GradController"]["direct_mode"]["boundary_error"]
         self._max_error_direct = params["GradController"]["direct_mode"]["max_error"]

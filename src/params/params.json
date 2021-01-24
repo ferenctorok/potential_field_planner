@@ -19,6 +19,7 @@
             "grad_vel_scaling": false
         },
         "direct_mode": {
+            "min_obst_dist": 6,
             "K": 0.5,
             "boundary_error": 0.2,
             "max_error": 1.0472
