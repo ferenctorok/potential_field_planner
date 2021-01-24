@@ -46,17 +46,19 @@ class PointRobotEnv:
         if self._fig is None:
             self._fig = plt.figure(1)
             self._ax = plt.gca()
+            plt.xlabel("y")
+            plt.ylabel("x")
         
         # clearing the axis:
         self._ax.cla()
         
         # setting the rectangles of the robot and the goal:
-        self._robo_patch = Rectangle((self._state[0], self._state[1]),
-            2, 1, angle=np.deg2rad(self._state[3]), color='r') 
+        self._robo_patch = Rectangle((self._state[1], self._state[0]),
+            2, 1, angle= -np.rad2deg(self._state[3] - np.pi / 2), color='r') 
         self._ax.add_patch(self._robo_patch)
 
-        self._goal_patch = Rectangle((self._goal_x, self._goal_y),
-            2, 1, angle=np.deg2rad(self._goal_psi))
+        self._goal_patch = Rectangle((self._goal_y, self._goal_x),
+            2, 1, angle= -np.rad2deg(self._goal_psi - np.pi / 2))
         self._ax.add_patch(self._goal_patch)
 
         # plotting the occupancy_grid:

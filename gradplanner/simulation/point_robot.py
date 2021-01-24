@@ -32,6 +32,12 @@ class PointRobot:
         self._psi = self._psi + self._Ts * self._omega
         self._omega = self._omega + self._Ts * epsilon
 
+        # limiting psi between pi and -pi
+        if self._psi > np.pi:
+            self._psi -= (2 * np.pi)
+        elif self._psi < -np.pi:
+            self._psi += (2 * np.pi)
+
         return np.array([self._x, self._y, self._v, self._psi, self._omega])
 
 

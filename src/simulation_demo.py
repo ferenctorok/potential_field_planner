@@ -13,7 +13,7 @@ param_file = "src/params/params.json"
 with open(param_file) as f:
     params = json.load(f)
 
-sim_param_file = "src/params/sim_1.json"
+sim_param_file = "src/params/sim_2.json"
 with open(sim_param_file) as f:
     sim_params = json.load(f)
 

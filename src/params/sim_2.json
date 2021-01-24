@@ -3,8 +3,8 @@
     "M": 64,
     "border": true,
     "init_state": {
-        "x": 25,
-        "y": 55,
+        "x": 43,
+        "y": 46,
         "v": 0,
         "psi": -1.5708,
         "omega": 0

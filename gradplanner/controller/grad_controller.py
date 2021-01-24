@@ -47,10 +47,13 @@ class GradController:
             if self._goal_ang_is_reached:
                 return np.array([0, 0])
             else:
+                print("In End mode.")
                 return self._get_cmd_vel_end()
         if self._goal_is_visible():
+            print("In Direct mode.")
             return self._get_cmd_vel_direct()
         else:
+            print("In Grad mode.")
             return self._get_cmd_vel_grad()
 
 
@@ -144,8 +147,10 @@ class GradController:
         else:
             grad3 = np.array([0, 0])
 
-        grad = self._norm_grad(grad1) + self._norm_grad(grad2) +\
-            self._norm_grad(grad3)
+        #grad = self._norm_grad(grad1) + self._norm_grad(grad2) +\
+        #    self._norm_grad(grad3)
+
+        grad = grad1 + grad2 + grad3
 
         # getting the desired angular and translational velocity:
         desired_direction = np.arctan2(grad[1], grad[0])
