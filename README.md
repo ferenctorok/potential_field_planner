@@ -12,16 +12,16 @@ Prototype implementation of a local minima free gradient field based controller 
 
 The attractor field:
 
-<img src="fig/attractor.png" alt="Attractor Gradient Field" width="300"/>
+<img src="fig/attractor.png" alt="Attractor Gradient Field" width="600"/>
 <br/><br/>
 
 The repulsive field:
 
-<img src="fig/repulsive.png" alt="Repulsive Gradient Field" width="300"/>
+<img src="fig/repulsive.png" alt="Repulsive Gradient Field" width="600"/>
 <br/><br/>
 
 The combined field:
 
-<img src="fig/combined.png" alt="Combined Gradient Field" width="300"/>
+<img src="fig/combined.png" alt="Combined Gradient Field" width="600"/>
 
 ## More Descreption is coming soon.
