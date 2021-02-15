@@ -135,13 +135,28 @@ class GradController:
         grad1 = self._attractor.get_grad(self._i, self._j) +\
             self._repulsive.get_grad(self._i, self._j)
 
-        i1, j1 = np.round(self._i), np.round(self._j)
+        # calculating the indices of the neighbours:
+        #i1, j1 = np.round(self._i), np.round(self._j)
+
+        if ((self._x - self._i) > 0.5): i1 = self._i + 1
+        else: i1 = self._i - 1
+        
+        if ((self._y - self._j) > 0.5): j1 = self._j + 1
+        else: j1 = self._j - 1
+
+        #if(abs(self._psi) < np.pi / 2): i1 = self._i + 1
+        #else: i1 = self._i - 1
+        #
+        #if(self._psi > 0): j1 = self._j + 1
+        #else: j1 = self._j - 1
+
+        # getting the gradients of the neighbouring cells:
         if (j1 >= 0) and (j1 < self._occupancy_grid.shape[1]):
             grad2 = self._attractor.get_grad(self._i, j1) +\
                 self._repulsive.get_grad(self._i, j1)
         else:
             grad2 = np.array([0, 0])
-
+        
         if (i1 >= 0) and (i1 < self._occupancy_grid.shape[0]):
             grad3 = self._attractor.get_grad(i1, self._j) +\
                 self._repulsive.get_grad(i1, self._j)

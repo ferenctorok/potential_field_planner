@@ -7,31 +7,31 @@
             "R": 16,
             "pos_tolerance": 0.1,
             "ang_tolerance": 0.2,
-            "max_trans_vel": 5,
-            "max_trans_acc": 4,
+            "max_trans_vel": 4,
+            "max_trans_acc": 2,
             "max_ang_vel": 1.5708,
-            "max_ang_acc": 6
+            "max_ang_acc": 3.1415
         },
         "grad_mode": {
-            "K": 2,
-            "boundary_error": 0.2,
-            "max_error": 1.0472,
+            "K": 0.8,
+            "boundary_error": 0.5,
+            "max_error": 2,
             "grad_vel_scaling": false
         },
         "direct_mode": {
-            "min_obst_dist": 8,
-            "K": 2,
+            "min_obst_dist": 6,
+            "K": 0.8,
             "boundary_error": 0.2,
             "max_error": 1.0472
         },
         "end_mode": {
-            "K_end": 0.5
+            "K_end": 0.8
         }
     },
     "LowLevelController": {
-        "acc_min": -4,
-        "acc_max": 4,
-        "epsilon_min": -6,
-        "epsilon_max": 6
+        "acc_min": -2,
+        "acc_max": 2,
+        "epsilon_min": -3.1415,
+        "epsilon_max": 3.1415
     }
 }
